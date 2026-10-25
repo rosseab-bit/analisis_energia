@@ -1,0 +1,12 @@
+.venv/
+__pycache__/
+*.pyc
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+.env
+
+# La BD se regenera con: python scripts/run_etl.py
+db/*.db
+db/*.db-journal
