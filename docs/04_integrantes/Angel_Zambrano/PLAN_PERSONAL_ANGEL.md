@@ -22,7 +22,7 @@ No hay una fecha de entrega oficial confirmada en esta revisión. Este plan prop
 
 | Situación comprobada o pendiente | Qué bloquea | Quién lo resuelve | Qué podés hacer mientras |
 |---|---|---|---|
-| `python3` es 3.9.6 y no existe `.venv` | Ejecutar el proyecto con un entorno propio compatible; requiere Python 3.11 o posterior. | Vos, con ayuda del agente. | Revisar documentación, archivos y configuración de GitHub. La auditoría anterior usó un Python 3.12 temporal; no es tu entorno habitual instalado. |
+| Entorno local preparado: `.venv` con Python 3.12.16; `python3` del sistema sigue en 3.9.6 | Usar el proyecto desde el entorno activado. | Vos. | Activar `.venv`; versión, dependencias, tests y lint registrados en la [evidencia de T-00](../../05_seguimiento/evidencia/ENTORNO_T00.md). |
 | Hay documentación sin commit en `docs/T-00-guia-angel` | Cambiar de rama sin mezclar o perder trabajo. | Vos revisás y registrás el trabajo. A revisa tu PR. | Lectura, planificación y preparación del entorno. No borrar ni mover cambios a otra tarea a ciegas. |
 | Usuarios, acceso de A/B y permisos de administración no confirmados | Completar invitaciones, dueños y protección de `main`. | A/B confirman sus cuentas; el administrador configura lo que requiera permisos. | Preparar plantilla de PR y mapa de responsables. No mergear `CODEOWNERS` con usuarios inventados. |
 | No hay `gh` en PATH | Publicar issues desde el generador; la prueba local sí funciona con Bash 3.2 y Python 3. | Vos, si elegís automatizar. | Validar con `DRY_RUN=1` o crear issues desde GitHub. No bloquea Git ni los commits. |
@@ -70,7 +70,7 @@ python -m ruff check src tests
 
 **Terminaste cuando:** Python cumple la versión, la configuración imprime `42`, podés ejecutar las verificaciones y registraste su salida. Si lint o tests fallan, diferenciar problemas de entorno de defectos del código y coordinar con su dueño antes de cerrar T-00/T-15.
 
-- [ ] Entorno propio compatible y verificación inicial registrada.
+- [x] Entorno propio compatible y verificación inicial registrada. Ver [evidencia del 30 de octubre de 2026](../../05_seguimiento/evidencia/ENTORNO_T00.md): semilla `42`, 29 tests y 3 subcasos aprobados; dos observaciones de lint preexistentes pendientes de A/B. Este paso no cierra T-00/T-15.
 
 ### Paso 2. Confirmar personas, accesos y entregas — T-00
 

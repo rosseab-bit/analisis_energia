@@ -83,6 +83,8 @@ La [evidencia detallada](evidencia/evidencia_verificacion_etl.json) se conserva 
 
 **Revisión de consistencia documental e infraestructura:** 29 tests aprobados y 3 subcasos de dependencias inválidas comprobados. El generador lee 50 tareas desde el plan, valida IDs/dependencias y se detiene si ya existen issues. Las pruebas de publicación utilizan un `gh` simulado; no acreditan configuración remota ni crean issues reales. La corrección temporal del ETL y las dos observaciones de lint de referencia siguen pendientes.
 
+**T-00, entorno local — 30 de octubre de 2026:** `.venv` creado con Python 3.12.16 de usuario; dependencias y paquete editable instalados. `pip check` aprobado, semilla `42`, 29 tests y 3 subcasos aprobados. Todas las bibliotecas importan; XGBoost ejecuta fit/predict con datos ficticios tras instalar OpenMP. Ruff mantiene `RUF046` en transform (A) y `F401` en validate (B). La [evidencia y las versiones exactas](evidencia/ENTORNO_T00.md) registran este paso; la instalación del resto del equipo, la infraestructura restante de T-00 y T-15 siguen pendientes.
+
 ## 6. Próximas acciones y decisiones de entrega
 
 | Acción | Quién coordina | Evidencia esperada |

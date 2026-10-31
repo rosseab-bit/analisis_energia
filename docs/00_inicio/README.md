@@ -20,6 +20,15 @@ python -m venv .venv && source .venv/bin/activate     # Windows: .venv\Scripts\a
 pip install -r requirements.txt && pip install -e .
 ```
 
+Para volver a usar un entorno ya creado, ejecutá `source .venv/bin/activate`
+(Windows: `.venv\Scripts\activate`). En VS Code, seleccioná `.venv/bin/python`
+como intérprete del proyecto. Comprobá la instalación con `python -m pip check`.
+
+En macOS, XGBoost necesita la biblioteca nativa OpenMP: si usás Homebrew,
+instalala con `brew install libomp` ([fórmula oficial](https://formulae.brew.sh/formula/libomp)).
+La [verificación local de T-00](../05_seguimiento/evidencia/ENTORNO_T00.md)
+registra Python 3.12.16, las versiones instaladas y la alternativa utilizada en esta Mac sin Homebrew.
+
 ## Uso disponible
 
 ```bash
