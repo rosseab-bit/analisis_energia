@@ -17,10 +17,10 @@ Fuente: `data/raw/demanda_electricidad_original_mensual1.csv` · 308 filas × 30
 
 ## Hallazgos de calidad (verificados sobre el CSV)
 
-1. **Sectores:** en las filas donde existen, `residencial + comercio_e_industria + grandes_usuarios = demanda_total` de forma exacta. Consecuencia: si la etiqueta se deriva de `demanda_total`, los sectores en valores absolutos **la reconstruyen** (fuga de datos). Usar participaciones (`part_*`) o excluirlos; se compara en el experimento de ablación (ver `specs/03-comparacion.md`).
+1. **Sectores:** en las filas donde existen, `residencial + comercio_e_industria + grandes_usuarios = demanda_total` de forma exacta. Consecuencia: si la etiqueta se deriva de `demanda_total`, los sectores en valores absolutos **la reconstruyen** (fuga de datos). Usar participaciones (`part_*`) o excluirlos; se compara en el experimento de ablación (ver `docs/07_especificaciones/03-comparacion.md`).
 2. **Distribuidoras:** cubren en promedio ~71 % de `demanda_total` (66 %–76 %); **no** suman el total. No se usan como features en la v1; se guardan en formato largo en `demanda_distribuidora`.
 3. **`potencia_maxima`** tiene correlación ≈ 0,96 con `demanda_total` (y `temperatura_promedio` ≈ 0,04 con la demanda total, pues el efecto es no lineal: sube en verano y en invierno). Es una variable concurrente muy informativa; se mantiene como feature pero se evalúa su peso en la ablación.
-4. **Tendencia:** la demanda anual media crece de ~6.500 (2001) a ~12.200 (2026). Con percentiles globales, los meses recientes caerían casi todos en Alta/Crítica. Por eso la etiqueta por defecto es `relativo_tendencia` (demanda / media móvil centrada de 12 meses).
+4. **Tendencia:** la demanda anual media crece de ~6.500 (2001) a ~12.200 (2026). Eso afecta a una etiqueta basada en percentiles globales. El código de referencia utiliza `relativo_tendencia`, pero su media centrada tiene un defecto temporal abierto. La decisión metodológica se mantiene en D1 de la spec, no se da por aprobada en este diccionario.
 5. **Estacionalidad:** picos en enero, julio y diciembre; mínimos en abril y septiembre-octubre. La amplitud del pico estacional **crece** con los años (ratio máximo a la tendencia: 1,05 en 2001 → 1,16–1,19 en 2023-2025), por lo que hay más meses Crítica en el período de test que en el de train.
 6. Sin valores negativos ni outliers (|z| > 3) en `demanda_total`.
 
