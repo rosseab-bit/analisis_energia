@@ -1,6 +1,6 @@
 """T — Transformación: limpieza, features de calendario, participaciones, etiqueta y split.
 
-Reglas de diseño (ver specs/01-datos.md):
+Reglas de diseño (ver docs/07_especificaciones/01-datos.md):
   * Los nulos de sectores y distribuidoras NO se imputan acá: son períodos en los que el dato
     no existe (sectores desde 2005-01, distribuidoras desde 2014-01). La imputación, si hace
     falta, ocurre dentro del Pipeline de sklearn para no filtrar información entre train y test.

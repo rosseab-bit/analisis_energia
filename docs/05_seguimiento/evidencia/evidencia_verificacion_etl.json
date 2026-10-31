@@ -1,0 +1,143 @@
+{
+  "versions": {
+    "python": "3.12.14",
+    "pandas": "2.2.3",
+    "numpy": "2.3.5"
+  },
+  "dataset": {
+    "sha256": "b2964bd292dbde9b7b688268b04ae2f0bb783ebf0d48a87ee1d85f7b2eaf2241",
+    "rows": 308,
+    "columns": 30,
+    "distributors": 23,
+    "start": "2001-01-01",
+    "end": "2026-08-01",
+    "duplicate_dates": 0,
+    "missing_months": 0,
+    "base_nulls": {
+      "demanda_total": 0,
+      "temperatura_promedio": 0,
+      "potencia_maxima": 0
+    },
+    "sector_nulls": {
+      "demanda_residencial": 48,
+      "comercio_e_industria": 48,
+      "grandes_usuarios": 48
+    },
+    "first_sector_date": "2005-01-01",
+    "max_sector_sum_error": 3.637978807091713e-12,
+    "distributor_start": "2014-01-01",
+    "distributor_end": "2026-06-01",
+    "distributor_nonnulls": 3450,
+    "distributor_mean_coverage": 0.7096957593124655,
+    "power_demand_correlation": 0.9630471907715372,
+    "temperature_range": [
+      9.3,
+      27.1
+    ],
+    "negative_energy_values": 0,
+    "validation_errors": [],
+    "validation_warnings": [
+      "Demanda sectorial ausente en 48 meses (2001-01 a 2004-12)",
+      "Distribuidoras ausentes en 158 meses (2001-01 a 2013-12; 2026-07 a 2026-08)",
+      "Las distribuidoras cubren en promedio 71.0% de demanda_total (no suman el 100 %); no se usan para reconstruir el total"
+    ]
+  },
+  "etl": {
+    "first_run": {
+      "etl_run_id": "etl_20261030_223206_249877",
+      "filas_datos_limpios": 308,
+      "filas_distribuidoras": 3450,
+      "base_datos": "/tmp/energia-audit.5EyVt8/verified.db",
+      "umbrales": {
+        "metodo": "relativo_tendencia",
+        "p_alta": 1.0431186751910402,
+        "p_critica": 1.0766404301639951,
+        "q_alta": 0.75,
+        "q_critica": 0.9,
+        "ventana_tendencia_meses": 12,
+        "n_train": 246,
+        "n_test": 62,
+        "ultimo_mes_train": "2021-06-01"
+      },
+      "advertencias": [
+        "Demanda sectorial ausente en 48 meses (2001-01 a 2004-12)",
+        "Distribuidoras ausentes en 158 meses (2001-01 a 2013-12; 2026-07 a 2026-08)",
+        "Las distribuidoras cubren en promedio 71.0% de demanda_total (no suman el 100 %); no se usan para reconstruir el total"
+      ],
+      "distribucion_etiquetas": {
+        "test": {
+          "Alta": 3,
+          "Crítica": 17,
+          "Normal": 42
+        },
+        "train": {
+          "Alta": 37,
+          "Crítica": 25,
+          "Normal": 184
+        }
+      }
+    },
+    "first_counts": {
+      "datos_limpios": 308,
+      "demanda_distribuidora": 3450,
+      "etl_auditoria": 1,
+      "predicciones": 0,
+      "metricas_modelo": 0,
+      "config_modelo": 0
+    },
+    "second_counts": {
+      "datos_limpios": 308,
+      "demanda_distribuidora": 3450,
+      "etl_auditoria": 2,
+      "predicciones": 1,
+      "metricas_modelo": 1,
+      "config_modelo": 1
+    },
+    "idempotent_data": true,
+    "preserves_all_model_tables": true,
+    "rollback_restores_all_tables": true,
+    "rollback_error_on_last_row": "CHECK constraint failed: etiqueta IN ('Normal','Alta','Crítica')",
+    "integrity_check": "ok",
+    "foreign_key_violations": [],
+    "audit_sha256_matches_csv": true,
+    "reset_clears_model_tables": true,
+    "reset_counts": {
+      "datos_limpios": 308,
+      "demanda_distribuidora": 3450,
+      "etl_auditoria": 1,
+      "predicciones": 0,
+      "metricas_modelo": 0,
+      "config_modelo": 0
+    }
+  },
+  "temporal_leak_probe": {
+    "method": "relativo_tendencia",
+    "change": "Multiply demand and sectors in test only by 50; train remains unchanged",
+    "thresholds_original": {
+      "p_alta": 1.0431186751910402,
+      "p_critica": 1.0766404301639951
+    },
+    "thresholds_after_test_change": {
+      "p_alta": 1.0428623651382567,
+      "p_critica": 1.0755915566991128
+    },
+    "train_scores_changed": 5,
+    "train_labels_changed": 3,
+    "train_dates_with_changed_scores": [
+      "2021-02-01",
+      "2021-03-01",
+      "2021-04-01",
+      "2021-05-01",
+      "2021-06-01"
+    ]
+  },
+  "cli": {
+    "valid_exit_code": 0,
+    "valid_stdout": "[ETL] OK -> /tmp/energia-audit.5EyVt8/verified.db\n  datos_limpios: 308 filas | demanda_distribuidora: 3450 filas\n  etiqueta (relativo_tendencia): P75=1.0431  P90=1.0766\n  train=246 (hasta 2021-06-01) | test=62\n  distribución de etiquetas: {\"test\": {\"Alta\": 3, \"Crítica\": 17, \"Normal\": 42}, \"train\": {\"Alta\": 37, \"Crítica\": 25, \"Normal\": 184}}\n  [aviso] Demanda sectorial ausente en 48 meses (2001-01 a 2004-12)\n  [aviso] Distribuidoras ausentes en 158 meses (2001-01 a 2013-12; 2026-07 a 2026-08)\n  [aviso] Las distribuidoras cubren en promedio 71.0% de demanda_total (no suman el 100 %); no se usan para reconstruir el total\n",
+    "duplicate_exit_code": 1,
+    "duplicate_error": "[ETL] DATOS INVÁLIDOS: Fechas duplicadas: [datetime.date(2001, 1, 1)]\n",
+    "duplicate_preserves_previous_database": true,
+    "missing_date_exit_code": 1,
+    "missing_date_has_traceback": true
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "date": "2026-10-30",
+  "repository": "rosseab-bit/analisis_energia",
+  "owner": "rosseab-bit",
+  "connection_user": "Angelzam21",
+  "connection_permissions": {
+    "admin": false,
+    "maintain": false,
+    "pull": true,
+    "push": true,
+    "triage": true
+  },
+  "main": {
+    "sha": "96fafa6db6bb566b6c9e8da26f9c6b4171c0cb7d",
+    "protected": false
+  },
+  "rulesets": [],
+  "issues": [],
+  "pull_requests": [],
+  "protection_read": {
+    "error": "GitHub API error 403: {\"message\":\"Resource not accessible by integration\",\"documentation_url\":\"https://docs.github.com/rest/branches/branch-protection#get-branch-protection\",\"status\":\"403\"}",
+    "error_code": "FORBIDDEN",
+    "error_data": {
+      "message": "Resource not accessible by integration",
+      "documentation_url": "https://docs.github.com/rest/branches/branch-protection#get-branch-protection",
+      "status": "403"
+    }
+  },
+  "user_confirmations": {
+    "owner_is_team_member": true,
+    "owner_role_a_or_b": "A",
+    "owner_name": "Ricky",
+    "owner_role_confirmed_on": "2026-10-31",
+    "owner_role_source": "Confirmación del usuario en esta conversación",
+    "other_member_username": "pending",
+    "other_member_name": "Brian",
+    "other_member_role": "B",
+    "member_names_confirmed_on": "2026-10-31",
+    "invitations_accepted": true,
+    "invitations_source": "Confirmación del usuario en esta conversación el 2026-10-31; no verificación por API",
+    "other_member_permissions": "unverified"
+  },
+  "note": "Los permisos son los informados por la conexión. La integración excluye acceso administrativo; un 403 no prueba los permisos reales de la cuenta en la web."
+}

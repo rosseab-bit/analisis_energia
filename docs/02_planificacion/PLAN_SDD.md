@@ -2,12 +2,12 @@
 
 > Documento base bajo **SDD (Spec-Driven Development)**: primero se acuerda la especificación, después el plan técnico, después las tareas, y recién entonces se implementa (con ayuda de un agente de IA por integrante). Cualquier cambio de alcance se hace primero en este documento, con su propio commit, y después en el código.
 
-Versión **0.3** · Equipo: 3 integrantes (A, B, C) · GitHub · SQLite · scikit-learn
+Versión **0.3** · Equipo: 3 integrantes (A, B, Angel Zambrano) · GitHub · SQLite · scikit-learn
 
 **Qué cambió respecto de v0.2**
 - Se agrega el **proceso ETL** del CSV `demanda_electricidad_original_mensual1.csv` → SQLite, ya diseñado y verificado (25 tests) contra el archivo real.
 - Se **reorganizan las tareas** entre los 3 integrantes (ETL repartido por módulos) y se elimina la tarea del dataset sintético: el ETL real genera la BD el primer día.
-- Cada tarea tiene una **ficha con prompt para el agente de IA** en `TAREAS_A.md`, `TAREAS_B.md` y `TAREAS_C.md`.
+- Cada tarea tiene una **ficha con prompt para el agente de IA** en `docs/04_integrantes/A/TAREAS_A.md`, `docs/04_integrantes/B/TAREAS_B.md` y `docs/04_integrantes/Angel_Zambrano/TAREAS_C.md`.
 - Se incorporan los **hallazgos de calidad de datos** (§1.3), que cambian decisiones de etiqueta, features y validación.
 
 ---
@@ -28,30 +28,19 @@ Analizar el dataset de demanda eléctrica y aplicar ML para **clasificar períod
 | RF-5 | Visualización | Gráficos y tablas claras + dashboard Streamlit con comparación de modelos |
 | RF-6 | **ETL** del CSV a SQLite | `python scripts/run_etl.py` valida, transforma y carga de forma atómica e idempotente, con auditoría |
 
-### 1.3 Hallazgos de los datos (verificados sobre el CSV) y su impacto
+**Entrega académica:** además de los requisitos técnicos, la consigna pide repositorio con código, script de carga, dependencias y README; base de datos accesible para revisión; **6 a 8 diapositivas en PDF o PPTX subidas al campus**; y defensa de **8 a 10 minutos**. Estos entregables se verifican en F-3/F-4 y en [Avance general](../05_seguimiento/avance.md).
 
-| # | Hallazgo | Impacto en el diseño |
-|---|----------|----------------------|
-| 1 | Serie **mensual** 2001-01 → 2026-08, **308 filas, sin meses faltantes** | Muestra chica: 246 meses de train y 62 de test. Las métricas serán ruidosas; se reporta con cautela |
-| 2 | Sectores (residencial, comercio e industria, grandes usuarios) **solo desde 2005-01** (48 nulos). Cuando existen, **suman exactamente `demanda_total`** | **Riesgo de fuga:** si la etiqueta sale de `demanda_total`, los sectores en valores absolutos la reconstruyen. Se usan participaciones (`part_*`) o se excluyen |
-| 3 | 23 distribuidoras **solo desde 2014-01 hasta 2026-06**, cubren ~71 % del total (no suman 100 %) | Fuera de las features de v1; se guardan en formato largo (`demanda_distribuidora`) |
-| 4 | `potencia_maxima` correlaciona **0,96** con `demanda_total` | Se pide como feature, pero se mide su peso con un experimento de ablación (`sin_potencia`) |
-| 5 | La demanda crece de ~6.500 (2001) a ~12.200 (2026) | Con percentiles globales, lo reciente sería casi todo Crítica. Etiqueta por defecto: **`relativo_tendencia`** (demanda / media móvil centrada 12 m) |
-| 6 | La **amplitud del pico estacional crece** (ratio máx. 1,05 en 2001 → 1,16–1,19 en 2023-25) | Más Crítica en test (27 %) que en train (10 %) y solo **3 Alta** en test. Es una propiedad real de los datos, no un error del ETL. Se documenta y se compara también una variante binaria |
-| 7 | Sin negativos ni outliers (|z|>3) | Validación estricta sin excepciones |
+La rúbrica asigna 25 % a cada bloque: código y Git; BD y visualización; modelado y resultados; presentación oral y defensa. La materia exige al menos dos modelos y visualizaciones claras; el equipo mantiene el compromiso de tres modelos y dashboard. La Tabla 3 es opcional en la consigna y parte del alcance interno de este plan.
 
-### 1.4 Decisiones a cerrar en la reunión de arranque (T-01)
-Se registran en `specs/01-datos.md` §4.
+### 1.3 Datos y riesgos de diseño
 
-| ID | Decisión | Propuesta por defecto |
-|---|---|---|
-| D1 | Definición de la etiqueta | `relativo_tendencia`, P75 = Alta, P90 = Crítica, umbrales **solo con train** |
-| D2 | Fuga por sectores / potencia | Features `base` (sin sectores absolutos); ablación con `con_participaciones` y `sin_potencia` |
-| D3 | Filas 2001-2004 sin sectores | Se conservan en Tabla 1 con NULL; los sets que usan sectores trabajan desde 2005 |
-| D4 | Muestra chica | `TimeSeriesSplit`; reportar F1 macro + Recall Crítica; variante binaria Normal vs Alta+Crítica |
-| D5 | Validación | Split cronológico 80/20 definido por el ETL (columna `split`), idéntico para los 3 modelos |
-| D6 | Distribuidoras | Fuera de v1 |
-| D7 | Unidades (GWh/MWh, MW) | Confirmar con la fuente y completar el diccionario |
+Los períodos, disponibilidad, unidades y hallazgos observados se mantienen en el [diccionario de datos](../06_datos/data_dictionary.md). La evidencia de ejecución y los defectos abiertos se registran en [avance general](../05_seguimiento/avance.md).
+
+El diseño debe evitar que los sectores reconstruyan la etiqueta, evaluar el efecto de potencia y respetar la separación temporal. La implementación de referencia usa una media centrada con una dependencia temporal comprobada: su existencia no aprueba esa metodología ni permite dar el ETL por cerrado.
+
+### 1.4 Decisiones a cerrar en T-01
+
+El único registro de D1-D7 está en la [spec de datos, sección 4](../07_especificaciones/01-datos.md#4-decisiones-abiertas-cerrar-en-t-01-con-los-3). Allí se acuerdan etiqueta, features, nulos, evaluación, split, distribuidoras y unidades. No se mantiene otra tabla de esas decisiones en el plan.
 
 ### 1.5 Fuera de alcance (v1)
 Forecasting, despliegue productivo, API REST.
@@ -67,7 +56,7 @@ CSV ─E─► validar ─V─► transformar ─T─► SQLite: datos_limpios (
                                                      │
                        ┌─────────────────────────────┼─────────────────────────────┐
                        ▼                             ▼                             ▼
-                 [LR · A]                       [RF · B]                       [XGB · C]    ← mismo preprocesador,
+                 [LR · A]                       [RF · B]                       [XGBoost]    ← mismo preprocesador,
           GridSearchCV · f1_macro      RandomizedSearchCV · f1_macro   RandomizedSearchCV     split, CV y evaluate
                        └─────────────────────────────┼─────────────────────────────┘
                                                      ▼
@@ -83,35 +72,46 @@ CSV ─E─► validar ─V─► transformar ─T─► SQLite: datos_limpios (
 | **E**xtract | `etl/extract.py` | Lee el CSV, normaliza nombres, parsea fechas, SHA-256 del archivo | ETL-1 | A |
 | **V**alidate | `etl/validate.py` | Errores (detienen) y advertencias (se auditan): fechas, huecos, negativos, rango de temperatura, nulos base, sectores todo-o-nada y suma = total | ETL-2 | B |
 | **T**ransform | `etl/transform.py` | Calendario (mes, estación, seno/coseno), participaciones, etiqueta, split cronológico, tabla larga de distribuidoras | ETL-3 | A |
-| **L**oad | `etl/load.py` | Transacción única, idempotente, rollback ante error, auditoría | ETL-4 | C |
-| Orquestación | `etl/pipeline.py`, `scripts/run_etl.py` | Une las etapas; CLI con `--reset` | ETL-5 | C |
+| **L**oad | `etl/load.py` | Transacción única, idempotente, rollback ante error, auditoría | ETL-4 | Angel Zambrano |
+| Orquestación | `etl/pipeline.py`, `scripts/run_etl.py` | Une las etapas; CLI con `--reset` | ETL-5 | Angel Zambrano |
 
 Reglas clave: los nulos de sectores/distribuidoras **no se imputan en el ETL** (el dato no existe esos meses; si hace falta imputar, ocurre dentro del `Pipeline` de sklearn para no filtrar información). Los umbrales de la etiqueta salen **solo del período train**.
 
-**Código de referencia:** el zip entregado incluye un ETL completo que ya corre sobre tu CSV (308 filas → `datos_limpios`, 3.450 filas → `demanda_distribuidora`, 25 tests OK). Sirve de punto de partida: cada dueño lo incorpora a su rama, lo revisa con su agente, lo ajusta a las decisiones D1–D7 aprobadas y lo entrega con **sus propios commits**.
+**Código de referencia:** ya está incorporado al repositorio. Cada dueño revisa su módulo, ajusta lo necesario a las decisiones aprobadas y entrega evidencia y cambios reales. No se elimina y vuelve a incorporar código para atribuir trabajo. Los resultados de la verificación se mantienen en avance general.
 
 ### 2.3 Estructura del repositorio
 
 ```
-proyecto-demanda/
-├── CLAUDE.md · README.md · PLAN_SDD.md · GUIA_EQUIPO.md · TAREAS_A/B/C.md
-├── pyproject.toml · requirements.txt · .gitignore · CODEOWNERS
-├── .github/ (pull_request_template.md · workflows/ci.yml)
-├── config/config.yaml              # semilla, rutas, ETL, etiqueta, feature_sets
-├── data/raw/demanda_electricidad_original_mensual1.csv
-├── db/demanda.db                   # generado (ignorado por git)
-├── docs/ (data_dictionary.md · model_card.md · informe_final.md · avance.md)
-├── specs/ (00-contratos · 01-datos · 02-modelo-{logreg,rf,xgb} · 03-comparacion · 04-visualizacion)
-├── notebooks/ (01_eda · 02_logreg · 03_rf · 04_xgb · 05_comparacion)
+analisis_energia/
+├── docs/
+│   ├── README.md                  # índice documental
+│   ├── 00_inicio/                 # README técnico del proyecto
+│   ├── 01_consigna/               # PDF oficial y revisión interna
+│   ├── 02_planificacion/          # este plan y coordinación
+│   ├── 03_guias/                  # equipo, agente, CLAUDE.md y PDF
+│   ├── 04_integrantes/            # A/, B/ y Angel_Zambrano/
+│   ├── 05_seguimiento/            # avance.md y evidencia/
+│   ├── 06_datos/                  # diccionario de datos
+│   ├── 07_especificaciones/       # contratos y specs
+│   └── 08_entrega/                # informe, model card y presentación (por crear)
+├── pyproject.toml · requirements.txt · .gitignore
+├── CODEOWNERS · .github/          # infraestructura pendiente de completar
+├── config/config.yaml
+├── data/raw/                     # CSV original
+├── db/                           # base generada, ignorada por Git
+├── notebooks/                    # análisis de modelos (por implementar)
 ├── src/demanda/
 │   ├── config.py
-│   ├── etl/ (extract · validate · transform · load · pipeline)
-│   ├── db/ (schema.sql · repository.py)
-│   ├── models/ (preprocessing · splits · evaluate · train · logreg · rf · xgb)
-│   └── viz/ (plots · app)
-├── scripts/ (run_etl.py · run_all.py · crear_issues.sh)
+│   ├── etl/                      # extract, validate, transform, load, pipeline
+│   ├── db/                       # esquema y repository (pendiente)
+│   ├── models/                   # módulos de modelos (pendientes)
+│   └── viz/                      # gráficos y app (pendientes)
+├── scripts/
 └── tests/
 ```
+
+La documentación no se guarda en la raíz. Su jerarquía se conserva al trasladarla a Google Drive, mientras el repositorio mantiene el backup. Las ubicaciones futuras del árbol no acreditan archivos o entregas ya implementados.
+
 
 ### 2.4 Contrato de modelos
 Cada modelo vive en su archivo (`logreg.py`, `rf.py`, `xgb.py`) y expone la misma interfaz; el runner los descubre solo, así que agregar un modelo no toca archivos ajenos.
@@ -150,7 +150,7 @@ El esquema completo está en `src/demanda/db/schema.sql`.
 
 ---
 
-## 3. Flujo de trabajo (resumen; detalle en `GUIA_EQUIPO.md`)
+## 3. Flujo de trabajo (resumen; detalle en `docs/03_guias/GUIA_EQUIPO.md`)
 
 **Una tarea = un issue = una rama = varios commits propios = un PR revisado por otro integrante.**
 
@@ -158,7 +158,7 @@ El esquema completo está en `src/demanda/db/schema.sql`.
 2. Cada integrante usa **su identidad de Git** → el historial prueba quién hizo qué.
 3. **Mínimo 3 commits por tarea**, orden SDD: *spec → test → implementación → docs*. Formato `tipo(ID): descripción`.
 4. Cada integrante trabaja **con su agente de IA**, pero el humano revisa el diff, entiende el código y es quien hace el commit.
-5. PR con `Closes #N`, revisión rotativa A→B→C→A, **merge sin squash**.
+5. PR con `Closes #N`, revisión rotativa A→B→Angel Zambrano→A, **merge sin squash**.
 6. Los issues se crean con `scripts/crear_issues.sh` (labels, milestones, dependencias `#N`).
 
 ---
@@ -169,9 +169,11 @@ El esquema completo está en `src/demanda/db/schema.sql`.
 |---|---|---|---|
 | **A** | Datos, diccionario, esquema de BD, `repository` (lectura y `save_run`) | **E**xtract + **T**ransform | **Logistic Regression** (`GridSearchCV`) |
 | **B** | Núcleo de modelado común (preprocesador, split/CV, `evaluate`, runner) y EDA | **V**alidate + EDA de decisión D1/D2 | **Random Forest** (`RandomizedSearchCV`) |
-| **C** | Repo, CI, fixtures, visualización y dashboard | **L**oad + orquestación y CLI | **XGBoost** (`RandomizedSearchCV`) |
+| **Angel Zambrano** | Repo, CI, fixtures, visualización y dashboard | **L**oad + orquestación y CLI | **XGBoost** (`RandomizedSearchCV`) |
 
-Fichas detalladas con prompts para el agente: `TAREAS_A.md`, `TAREAS_B.md`, `TAREAS_C.md`.
+**Angel Zambrano corresponde al identificador interno C.** Se conservan `docs/04_integrantes/Angel_Zambrano/TAREAS_C.md`, `GH_USER_C` y `persona-C` para mantener las referencias del proyecto. Su guía práctica está en [Plan personal de Angel](../04_integrantes/Angel_Zambrano/PLAN_PERSONAL_ANGEL.md).
+
+Fichas detalladas con prompts para el agente: `docs/04_integrantes/A/TAREAS_A.md`, `docs/04_integrantes/B/TAREAS_B.md`, `docs/04_integrantes/Angel_Zambrano/TAREAS_C.md`.
 
 ---
 
@@ -183,11 +185,11 @@ Fichas detalladas con prompts para el agente: `TAREAS_A.md`, `TAREAS_B.md`, `TAR
 
 | ID | Tarea | Resp. | Depende de | Entregable |
 |----|-------|-------|-----------|-----------|
-| T-00 | Repo y esqueleto: `pyproject`, `requirements`, `.gitignore`, `config.yaml`, `CLAUDE.md`, `CODEOWNERS`, plantilla de PR, protección de `main`, invitaciones | C | – | Repo clonable; `pip install -e .` funciona |
-| T-01 | Reunión de arranque: cerrar D1–D7, aprobar `specs/00-contratos.md` y `specs/01-datos.md` (cada uno redacta su parte) | A+B+C | T-00 | Specs aprobadas por PR |
-| T-02 | Diccionario de datos y unidades (D7) | A | T-00 | `docs/data_dictionary.md` |
+| T-00 | Completar repo y esqueleto: `pyproject`, `requirements`, `.gitignore`, `config.yaml`, `docs/03_guias/CLAUDE.md`, `CODEOWNERS`, plantilla de PR, protección de `main`, invitaciones | Angel Zambrano | – | Repo clonable; `pip install -e .` funciona |
+| T-01 | Reunión de arranque: cerrar D1–D7, aprobar `docs/07_especificaciones/00-contratos.md` y `docs/07_especificaciones/01-datos.md` (cada uno redacta su parte) | A+B+Angel Zambrano | T-00 | Specs aprobadas por PR |
+| T-02 | Diccionario de datos y unidades (D7) | A | T-00 | `docs/06_datos/data_dictionary.md` |
 | T-03 | `schema.sql` (Tabla 1, 2, 3 + extras del ETL) | A | T-01 | DDL idempotente |
-| CMP-1 | Spec de comparación (criterios fijados **antes** de ver resultados) | A+B+C | T-01 | `specs/03-comparacion.md` |
+| CMP-1 | Spec de comparación (criterios fijados **antes** de ver resultados) | A+B+Angel Zambrano | T-01 | `docs/07_especificaciones/03-comparacion.md` |
 
 ### Fase 1 — ETL y base compartida (semanas 1–2)
 
@@ -196,8 +198,8 @@ Fichas detalladas con prompts para el agente: `TAREAS_A.md`, `TAREAS_B.md`, `TAR
 | ETL-1 | **Extract**: lectura, normalización de columnas, fechas, SHA-256 | A | T-02 | `etl/extract.py` + tests |
 | ETL-2 | **Validate**: reglas de calidad (errores vs advertencias) | B | T-01 | `etl/validate.py` + tests |
 | ETL-3 | **Transform**: calendario, participaciones, etiqueta (D1), split cronológico, tabla larga | A | T-01 | `etl/transform.py` + tests (incl. "sin fuga") |
-| ETL-4 | **Load**: transacción, idempotencia, rollback, auditoría | C | T-03 | `etl/load.py` + tests |
-| ETL-5 | **Pipeline + CLI** `run_etl.py` + test de integración con el CSV real | C | ETL-1, ETL-2, ETL-3, ETL-4 | `demanda.db` reproducible |
+| ETL-4 | **Load**: transacción, idempotencia, rollback, auditoría | Angel Zambrano | T-03 | `etl/load.py` + tests |
+| ETL-5 | **Pipeline + CLI** `run_etl.py` + test de integración con el CSV real | Angel Zambrano | ETL-1, ETL-2, ETL-3, ETL-4 | `demanda.db` reproducible |
 | ETL-6 | **EDA de decisión**: comparar métodos de etiqueta (D1), balance de clases, correlaciones, ablación preliminar (D2) | B | ETL-5 | `notebooks/01_eda.ipynb` + recomendación |
 | DB-1 | `repository.load_clean_data()` | A | ETL-5 | Función + tests |
 | DB-2 | `repository.save_run()` (Tablas 2 y 3) en una transacción | A | T-03 | Función + tests |
@@ -205,25 +207,25 @@ Fichas detalladas con prompts para el agente: `TAREAS_A.md`, `TAREAS_B.md`, `TAR
 | MC-2 | `splits.py`: usa la columna `split` + `get_cv()` (`TimeSeriesSplit`) | B | ETL-5 | `splits.py` + tests |
 | MC-3 | `evaluate.py`: Accuracy, Precision, Recall, F1 (macro y por clase) + matriz de confusión | B | T-01 | `evaluate.py` + tests |
 | MC-4 | Runner `train.py` (`--model`, `--features`, autodescubrimiento) | B | MC-1, MC-2, MC-3, DB-1, DB-2 | Comando único |
-| T-15 | CI en GitHub Actions (pytest + ruff) | C | T-00 | Check obligatorio |
-| VIZ-1 | `plots.py` base: clases, demanda vs temperatura, estacionalidad, serie con períodos críticos | C | ETL-5 | Funciones reutilizables |
-| VIZ-2 | BD fixture con las 3 tablas (resultados ficticios) para tests y dashboard | C | T-03 | Fixture de test |
+| T-15 | CI en GitHub Actions (pytest + ruff) | Angel Zambrano | T-00 | Check obligatorio |
+| VIZ-1 | `plots.py` base: clases, demanda vs temperatura, estacionalidad, serie con períodos críticos | Angel Zambrano | ETL-5 | Funciones reutilizables |
+| VIZ-2 | BD fixture con las 3 tablas (resultados ficticios) para tests y dashboard | Angel Zambrano | T-03 | Fixture de test |
 
 ### Fase 2 — Entrenamiento de modelos (semanas 2–4, en paralelo, cada uno por separado)
 
-Las **7 tareas son idénticas en estructura**; cambia el algoritmo. Prefijo `LR-` (A), `RF-` (B), `XG-` (C).
+Las **7 tareas son idénticas en estructura**; cambia el algoritmo. Prefijo `LR-` (A), `RF-` (B), `XG-` (Angel Zambrano).
 
 | Paso | Tarea (se repite por modelo) | Depende de | Entregable |
 |---|---|---|---|
-| **X-1** | **Spec del modelo**: justificación, hiperparámetros y rangos, tratamiento del desbalance | T-01 | `specs/02-modelo-<x>.md` |
+| **X-1** | **Spec del modelo**: justificación, hiperparámetros y rangos, tratamiento del desbalance | T-01 | `docs/07_especificaciones/02-modelo-<x>.md` |
 | **X-2** | **Módulo del modelo** (contrato §2.4) + test unitario | X-1, T-03 | `models/<x>.py` + `tests/` |
-| **X-3** | **Baseline** sin tuning con el pipeline común, set `base` | X-2, MC-1, MC-2 | Baseline reproducible |
+| **X-3** | **Baseline** sin tuning con el pipeline común y validación temporal de train, set `base` | X-2, MC-1, MC-2, MC-3 | Baseline reproducible |
 | **X-4** | **Búsqueda de hiperparámetros** con la CV temporal común y scoring `f1_macro` | X-3 | Mejores parámetros, `cv_best_score` |
 | **X-5** | **Evaluación** en test + **ablación** de features (`base`, `con_participaciones`, `sin_potencia`) | X-4, MC-3 | Métricas y matrices por set |
 | **X-6** | **Persistencia** en Tablas 2 y 3 con `run_id` propio | X-5, MC-4, DB-2 | Filas en `demanda.db` |
-| **X-7** | **Notebook e informe**: interpretación y análisis de errores | X-6 | `notebooks/0N_<x>.ipynb` + `docs/model_card.md` |
+| **X-7** | **Notebook e informe**: interpretación y análisis de errores | X-6 | `notebooks/0N_<x>.ipynb` + `docs/08_entrega/model_card.md` |
 
-| | A · Logistic Regression | B · Random Forest | C · XGBoost |
+| | A · Logistic Regression | B · Random Forest | Angel Zambrano · XGBoost |
 |---|---|---|---|
 | Búsqueda | `GridSearchCV` | `RandomizedSearchCV` | `RandomizedSearchCV` |
 | Hiperparámetros | `C`, `penalty`, `solver` | `n_estimators`, `max_depth`, `min_samples_leaf`, `max_features` | `n_estimators`, `max_depth`, `learning_rate`, `subsample`, `colsample_bytree`, `reg_lambda` |
@@ -236,28 +238,30 @@ Las **7 tareas son idénticas en estructura**; cambia el algoritmo. Prefijo `LR-
 | ID | Tarea | Resp. | Depende de | Entregable |
 |----|-------|-------|-----------|-----------|
 | CMP-2 | `compare_runs()`: consulta consolidada de los 3 `run_id` (mismo split y semilla) | A | LR-6, RF-6, XG-6, CMP-1 | Función + tests |
-| CMP-3 | Tabla comparativa y gráficos: barras de métricas, matrices lado a lado, F1 por clase, tiempos, ablación | C | CMP-2, VIZ-1 | `plots.py` ampliado |
+| CMP-3 | Tabla comparativa y gráficos: barras de métricas, matrices lado a lado, F1 por clase, tiempos, ablación | Angel Zambrano | CMP-2, VIZ-1 | `plots.py` ampliado |
 | CMP-4 | Análisis: qué modelo gana y por qué, errores por clase, efecto del desbalance y de la deriva estacional | B | CMP-3 | `notebooks/05_comparacion.ipynb` |
-| CMP-5 | Decisión del modelo final según los criterios de CMP-1 | A+B+C | CMP-4 | Sección en `docs/model_card.md` |
+| CMP-5 | Decisión del modelo final según los criterios de CMP-1 | A+B+Angel Zambrano | CMP-4 | Sección en `docs/08_entrega/model_card.md` |
 
 ### Fase 4 — Dashboard y cierre (semanas 5–6)
 
 | ID | Tarea | Resp. | Depende de | Entregable |
 |----|-------|-------|-----------|-----------|
-| V-1 | Dashboard Streamlit: filtros por modelo, fecha y clase; métricas; matrices; predicciones; calidad de datos (auditoría ETL) | C | CMP-3 | `app.py` sobre `demanda.db` |
+| V-1 | Dashboard Streamlit: filtros por modelo, fecha y clase; métricas; matrices; predicciones; calidad de datos (auditoría ETL) | Angel Zambrano | CMP-3 | `app.py` sobre `demanda.db` |
 | F-1 | `run_all.py` + test de integración (ETL → 3 modelos → BD) | B | CMP-2 | Un comando de punta a punta |
-| F-2 | Revisión cruzada final (A→B, B→C, C→A) | A+B+C | V-1, F-1 | PRs de revisión cerrados |
-| F-3 | Informe final y README (una sección por integrante) | A+B+C | CMP-5, V-1 | `docs/informe_final.md` |
-| F-4 | Ensayo de demo desde cero | A+B+C | F-3 | Demo reproducible |
+| F-2 | Revisión cruzada final (A→B, B→Angel Zambrano, Angel Zambrano→A) | A+B+Angel Zambrano | V-1, F-1 | PRs de revisión cerrados |
+| F-3 | Informe y README, acceso de revisión a la BD y presentación de 6 a 8 diapositivas PDF/PPTX; acordar responsable y registrar subida al campus | A+B+Angel Zambrano | CMP-5, V-1 | Informe, README probado, BD accesible y presentación entregada |
+| F-4 | Ensayo de demo desde cero y defensa oral de 8 a 10 minutos, con reparto de exposición | A+B+Angel Zambrano | F-3 | Demo reproducible, duración registrada y los tres preparados para defenderla |
+
+Los borradores de presentación, el reparto de exposición y el mecanismo de acceso a la BD pueden prepararse antes de terminar el modelado. F-3/F-4 se cierran con resultados definitivos y las dependencias verificadas. La consolidación de diapositivas y la subida al campus se asignan explícitamente en el issue conjunto; no se presuponen a cargo de una persona.
 
 ### Camino crítico
 `T-01 → T-03 → ETL-4 → ETL-5 → MC-1/MC-2 → MC-4 → X-3 → X-4 → X-5 → X-6 → CMP-2 → CMP-3 → CMP-4 → CMP-5 → F-3`
 
-Los tres modelos corren en paralelo; el único punto de sincronización es **CMP-2**.
+Los modelos pueden desarrollarse en paralelo una vez disponibles sus componentes comunes. CMP-2 reúne los tres runs; antes también existen dependencias compartidas de ETL, contratos, persistencia y runner.
 
 ### Carga por integrante (tareas propias, sin contar las conjuntas)
 
-| A | B | C |
+| A | B | Angel Zambrano |
 |---|---|---|
 | T-02, T-03, ETL-1, ETL-3, DB-1, DB-2, LR-1…7, CMP-2 = **14** | ETL-2, ETL-6, MC-1…4, RF-1…7, CMP-4, F-1 = **15** | T-00, T-15, ETL-4, ETL-5, VIZ-1, VIZ-2, XG-1…7, CMP-3, V-1 = **15** |
 
@@ -269,11 +273,11 @@ Conjuntas (las tres personas): T-01, CMP-1, CMP-5, F-2, F-3, F-4.
 - [ ] Issue con ID de tarea; el PR lo cierra (`Closes #N`).
 - [ ] Spec/criterio escrito **antes** de implementar.
 - [ ] Mínimo 3 commits propios, Conventional Commits con ID de tarea.
-- [ ] Tests y linter pasan en local y en CI.
+- [ ] Verificaciones pertinentes aprobadas; en código y CI, tests y linter en local y CI. En documentación, evidencia, enlaces y coherencia.
 - [ ] El autor puede **explicar** el código (aunque lo haya generado el agente).
 - [ ] Documentación y docstrings actualizados.
 - [ ] PR aprobado por otro integrante; merge **sin squash**.
-- [ ] Casilla marcada en `docs/avance.md`.
+- [ ] Casilla marcada en `docs/05_seguimiento/avance.md`.
 
 ## 7. Riesgos y mitigaciones
 
@@ -281,15 +285,15 @@ Conjuntas (las tres personas): T-01, CMP-1, CMP-5, F-2, F-3, F-4.
 |---|---|
 | **Fuga de datos**: sectores suman `demanda_total`; etiqueta derivada de `demanda_total` | Columnas prohibidas en `config.yaml`; test anti-fuga en MC-1; features `base` sin sectores absolutos |
 | **`potencia_maxima` casi colineal** con la demanda (0,96) | Ablación `sin_potencia`; reportar ambos resultados |
-| **Muestra chica** (62 meses de test, 3 Alta) → métricas inestables | `TimeSeriesSplit`, F1 macro + Recall Crítica, advertir en el informe; variante binaria |
+| **Muestra chica y clases desbalanceadas** → métricas inestables | `TimeSeriesSplit`, F1 macro + Recall Crítica, advertir en el informe; variante binaria |
 | **Deriva estacional** (más Crítica en test) | Documentada; análisis en CMP-4 |
 | Comparación injusta | Mismo preprocesador, split, CV, semilla y `evaluate.py` |
 | Código del agente que nadie entiende | DoD: el autor explica el código; revisión cruzada; prompts piden código simple |
 | Conflictos de merge | Un archivo por modelo y por etapa ETL; `CODEOWNERS` |
-| Un integrante concentra commits | Tareas chicas, 3 commits mínimo, revisión cruzada, `git shortlog` en la sincronía |
+| Aportes desequilibrados | Revisar código, documentación, integración y revisiones; no usar solo la cantidad de commits |
 | ETL cambia etiquetas y deja resultados viejos | Re-entrenar tras cualquier cambio de ETL; `--reset` documentado |
 
-## 8. Cronograma (ajustable)
+## 8. Cronograma interno (ajustable; no es una fecha oficial de entrega)
 
 | Semana | Fechas | Foco |
 |---|---|---|

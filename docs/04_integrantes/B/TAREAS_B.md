@@ -1,25 +1,14 @@
 # Tareas del Integrante B — Núcleo de modelado, validación del ETL y Random Forest
 
-Complementa a `PLAN_SDD.md` (qué y cuándo) y `GUIA_EQUIPO.md` (cómo). Cada ficha trae un **prompt listo para pegar en tu agente de IA** (Claude Code). Antes de pegar un prompt, seguí el *arranque de tarea* de `GUIA_EQUIPO.md §3` (rama nueva, `git pull`, agente abierto en la raíz del repo para que lea `CLAUDE.md`).
+Complementa a `docs/02_planificacion/PLAN_SDD.md` (qué y cuándo) y `docs/03_guias/GUIA_EQUIPO.md` (cómo). Cada ficha trae un **prompt listo para pegar en tu agente de IA** (Claude Code). Antes de pegar un prompt, seguí el *arranque de tarea* de `docs/03_guias/GUIA_EQUIPO.md §3` (rama nueva, `git pull`, agente abierto en la raíz del repo para que lea `docs/03_guias/CLAUDE.md`).
 
-**Tu foco:** que los 3 modelos se entrenen y evalúen con **exactamente las mismas reglas** (preprocesador, split, CV, métricas, runner), la validación de calidad del ETL y el modelo **Random Forest**. Lo que construís en `MC-*` lo usan A y C: es el punto más sensible del proyecto para que la comparación sea justa.
+**Tu foco:** que los 3 modelos se entrenen y evalúen con **exactamente las mismas reglas** (preprocesador, split, CV, métricas, runner), la validación de calidad del ETL y el modelo **Random Forest**. Lo que construís en `MC-*` lo usan A y Angel Zambrano: es el punto más sensible del proyecto para que la comparación sea justa.
 
-## Orden recomendado
+## Cómo elegir la siguiente tarea
 
-| Orden | Semana | Tarea | Por qué en este orden |
-|---|---|---|---|
-| 1 | 1 | **T-01** Reunión de arranque | Tu parte: redactar el contrato de preprocesado/evaluación en `specs/00-contratos.md` |
-| 2 | 1 | **ETL-2** Validate | Solo depende de T-01 |
-| 3 | 1 | **MC-3** `evaluate.py` | Solo depende de T-01; se prueba con arrays chicos |
-| 4 | 1–2 | **RF-1** Spec del modelo | Se puede escribir desde ya |
-| 5 | 2 | **ETL-6** EDA de decisión | Necesita `demanda.db` (ETL-5 de C) |
-| 6 | 2 | **MC-1** Preprocesador y **MC-2** Split/CV | Necesitan ETL-5 |
-| 7 | 2–3 | **RF-2** y **MC-4** Runner | MC-4 espera a DB-1/DB-2 (de A) |
-| 8 | 3–4 | **RF-3 → RF-7** | Tu modelo |
-| 9 | 5 | **CMP-4** Análisis comparativo | Cuando C entregue CMP-3 |
-| 10 | 6 | **F-1** `run_all.py` + CMP-1, CMP-5, F-2, F-3, F-4 | Cierre |
+El orden, responsables y dependencias se mantienen en el [plan SDD](../../02_planificacion/PLAN_SDD.md#5-tareas). Las fichas de abajo explican cómo ejecutar cada entrega; no mantienen un segundo calendario. Prepará borradores si falta una dependencia, pero no la des por cerrada ni implementes un contrato no aprobado.
 
-**Revisás los PRs de:** A (tus PRs los revisa C).
+**Revisás los PRs de:** A (tus PRs los revisa Angel Zambrano).
 
 ---
 
@@ -30,7 +19,7 @@ Complementa a `PLAN_SDD.md` (qué y cuándo) y `GUIA_EQUIPO.md` (cómo). Cada fi
 
 **Prompt para el agente**
 ```text
-Tarea ETL-2 (Validate). Seguí CLAUDE.md y specs/01-datos.md (criterios ETL-2 y ETL-3). Tests primero
+Tarea ETL-2 (Validate). Seguí docs/03_guias/CLAUDE.md y docs/07_especificaciones/01-datos.md (criterios ETL-2 y ETL-3). Tests primero
 (tests/test_validate.py) con un DataFrame sintético pequeño con la misma forma que el CSV real.
 Reglas de ERROR: columnas obligatorias ausentes; fechas nulas, duplicadas o que no sean día 1; meses faltantes;
 nulos o negativos en demanda_total/temperatura_promedio/potencia_maxima; temperatura fuera de
@@ -42,7 +31,7 @@ Un test por regla, y un test que confirme que los nulos esperados del CSV real s
 ```
 **Aceptación:** una regla = un test · el CSV real pasa sin errores y produce las 3 advertencias esperadas · `ruff` limpio.
 
-**Commits:** `test(ETL-2): un test por regla de validación` → `feat(ETL-2): implementa validate con errores y advertencias` → `docs(ETL-2): documenta reglas en specs/01-datos.md`
+**Commits:** `test(ETL-2): un test por regla de validación` → `feat(ETL-2): implementa validate con errores y advertencias` → `docs(ETL-2): documenta reglas en docs/07_especificaciones/01-datos.md`
 
 **Revisá vos:** que cada test de error falle si borrás la regla correspondiente (probalo comentando la regla).
 
@@ -64,14 +53,14 @@ y_true, todo predicho como Normal. Verificá que el resultado es serializable a 
 ```
 **Aceptación:** claves idénticas al contrato · no falla si falta una clase · JSON-serializable.
 
-**Commits:** `test(MC-3): tests con casos calculados a mano` → `feat(MC-3): implementa evaluate con métricas macro y por clase` → `docs(MC-3): documenta claves devueltas en specs/00-contratos.md`
+**Commits:** `test(MC-3): tests con casos calculados a mano` → `feat(MC-3): implementa evaluate con métricas macro y por clase` → `docs(MC-3): documenta claves devueltas en docs/07_especificaciones/00-contratos.md`
 
 ---
 
 ## RF-1 · Spec del modelo
-**Depende de:** T-01 · **Entregable:** `specs/02-modelo-rf.md`
+**Depende de:** T-01 · **Entregable:** `docs/07_especificaciones/02-modelo-rf.md`
 ```text
-Tarea RF-1. Escribí specs/02-modelo-rf.md: por qué Random Forest (captura no linealidades, no necesita
+Tarea RF-1. Escribí docs/07_especificaciones/02-modelo-rf.md: por qué Random Forest (captura no linealidades, no necesita
 escalado pero convive con el preprocesador común), desbalance (class_weight='balanced'), el espacio de
 RandomizedSearchCV (n_estimators [100,200,400,600], max_depth [None,5,10,20], min_samples_leaf [1,2,5,10],
 max_features ["sqrt","log2",0.5], n_iter=30; justificá el rango y n_iter con el tamaño de muestra), scoring
@@ -83,7 +72,7 @@ Interpretación: importancia por impureza (sesgada) + importancia por permutaci�
 ---
 
 ## ETL-6 · EDA de decisión (D1 y D2)
-**Depende de:** ETL-5 · **Rama:** `docs/ETL-6-eda` · **Entregable:** `notebooks/01_eda.ipynb` + recomendación en `specs/01-datos.md`
+**Depende de:** ETL-5 · **Rama:** `docs/ETL-6-eda` · **Entregable:** `notebooks/01_eda.ipynb` + recomendación en `docs/07_especificaciones/01-datos.md`
 
 **Prompt para el agente**
 ```text
@@ -94,14 +83,14 @@ los métodos de etiqueta percentil_global vs relativo_tendencia — distribució
 (demostrá con datos que percentil_global concentra lo reciente en Crítica); (4) D2: demostrar la fuga: un modelo
 trivial con los sectores en valores absolutos reconstruye la etiqueta casi perfecto, contra uno con
 participaciones o sin sectores; correlación de potencia_maxima con demanda_total; (5) balance de clases y qué
-significa para test (3 Alta). Cerrá con una RECOMENDACIÓN por decisión (D1, D2, D4) que el equipo pueda
+significa para test (medir sus conteos de clase). Cerrá con una RECOMENDACIÓN por decisión (D1, D2, D4) que el equipo pueda
 aprobar. Gráficos claros con matplotlib/seaborn, títulos y ejes en español. No guardes nada en la BD.
 ```
-**Aceptación:** cada recomendación apoyada en un gráfico o número del notebook · el notebook corre de punta a punta · conclusiones llevadas a `specs/01-datos.md §4`.
+**Aceptación:** cada recomendación apoyada en un gráfico o número del notebook · el notebook corre de punta a punta · conclusiones llevadas a `docs/07_especificaciones/01-datos.md §4`.
 
 **Commits:** `docs(ETL-6): EDA de calidad, tendencia y estacionalidad` → `docs(ETL-6): comparación de métodos de etiqueta (D1)` → `docs(ETL-6): demostración de fuga por sectores y recomendación (D2)`
 
-**Revisá vos:** si la recomendación cambia el método de etiqueta, avisá a A (ETL-3) y a C antes de mergear.
+**Revisá vos:** si la recomendación cambia el método de etiqueta, avisá a A (ETL-3) y a Angel Zambrano antes de mergear.
 
 ---
 
@@ -119,7 +108,7 @@ feature_set no existe. Los 3 modelos usan este mismo objeto: no agregues lógica
 ```
 **Aceptación:** test anti-fuga verde para los 3 sets · sin `fit` sobre test · nombres de columnas disponibles para la interpretación.
 
-**Commits:** `test(MC-1): test anti-fuga y de forma de salida` → `feat(MC-1): build_preprocessor desde feature_sets` → `docs(MC-1): documenta feature sets en specs/00-contratos.md`
+**Commits:** `test(MC-1): test anti-fuga y de forma de salida` → `feat(MC-1): build_preprocessor desde feature_sets` → `docs(MC-1): documenta feature sets en docs/07_especificaciones/00-contratos.md`
 
 ---
 
@@ -151,14 +140,15 @@ Pasos: (1) importlib.import_module(f"demanda.models.{model}") — autodescubrimi
 Pipeline([("prep", build_preprocessor(cfg, feature_set)), ("clf", mod.get_estimator(seed))]);
 (4) GridSearchCV si mod.SEARCH=="grid" o RandomizedSearchCV(n_iter=mod.get_n_iter(), random_state=seed) si
 "random", con cv=get_cv(cfg), scoring de config, refit=True, SOLO sobre train; (5) si el módulo define
-NEEDS_SAMPLE_WEIGHT=True, calcular compute_sample_weight("balanced", y_train) y pasarlo como
-fit_params={"clf__sample_weight": ...}; (6) predecir en test con probabilidades, evaluar con evaluate.py,
+NEEDS_SAMPLE_WEIGHT=True, usar la interfaz acordada con Angel Zambrano para calcular pesos en cada fit
+solo con el entrenamiento recibido por ese fold. El ajuste final usa train completo; no calcular un
+vector balanceado global antes de CV. Probar esa independencia. (6) predecir en test con probabilidades, evaluar con evaluate.py,
 medir tiempo, y guardar con save_run (run_id = f"{model}_{features}_{timestamp}"). Las columnas de
 predict_proba siguen el orden de pipeline.classes_ (alfabético: Alta, Crítica, Normal), así que mapealas a
 prob_normal/prob_alta/prob_critica por NOMBRE de clase, nunca por posición, y testealo; (7) imprimir resumen.
-Tests con un modelo falso (módulo dummy en tests/) para no depender de A ni C: verifica descubrimiento,
+Tests con un modelo falso (módulo dummy en tests/) para no depender de A ni Angel Zambrano: verifica descubrimiento,
 que test no entra al fit, que se guarda un run y que NEEDS_SAMPLE_WEIGHT se respeta. El contrato
-NEEDS_SAMPLE_WEIGHT debe documentarse en specs/00-contratos.md y acordarse con C (XG-1).
+NEEDS_SAMPLE_WEIGHT debe documentarse en docs/07_especificaciones/00-contratos.md y acordarse con Angel Zambrano (XG-1).
 ```
 **Aceptación:** el mismo comando corre los 3 modelos · no hay `if model == ...` · test con módulo dummy verde.
 
@@ -169,12 +159,12 @@ NEEDS_SAMPLE_WEIGHT debe documentarse en specs/00-contratos.md y acordarse con C
 ---
 
 ## RF-2 … RF-7 · Modelo Random Forest
-Archivos: `specs/02-modelo-rf.md`, `src/demanda/models/rf.py`, `tests/test_rf.py`, `notebooks/03_rf.ipynb`. Mismo preprocesador, split, CV y `evaluate` que los otros modelos (los construiste vos en MC-*).
+Archivos: `docs/07_especificaciones/02-modelo-rf.md`, `src/demanda/models/rf.py`, `tests/test_rf.py`, `notebooks/03_rf.ipynb`. Mismo preprocesador, split, CV y `evaluate` que los otros modelos (los construiste vos en MC-*).
 
 ### RF-2 · Módulo del modelo
 **Depende de:** RF-1, T-03 · **Entregable:** `models/rf.py` + `tests/test_rf.py`
 ```text
-Tarea RF-2. Tests primero. Implementá src/demanda/models/rf.py con el contrato de CLAUDE.md: NAME="rf",
+Tarea RF-2. Tests primero. Implementá src/demanda/models/rf.py con el contrato de docs/03_guias/CLAUDE.md: NAME="rf",
 SEARCH="random", get_estimator(random_state) -> RandomForestClassifier(class_weight="balanced",
 random_state=random_state, n_jobs=-1), get_param_grid() con claves "clf__n_estimators", "clf__max_depth",
 "clf__min_samples_leaf", "clf__max_features" según RF-1, get_n_iter() -> 30. Tests: tiene predict_proba y
@@ -183,12 +173,12 @@ class_weight balanced; claves con prefijo clf__; n_iter es entero positivo y no 
 **Commits:** `test(RF-2): test del contrato del módulo rf` → `feat(RF-2): implementa rf con class_weight balanced` → `docs(RF-2): docstrings`
 
 ### RF-3 · Baseline
-**Depende de:** RF-2, MC-1, MC-2
+**Depende de:** RF-2, MC-1, MC-2, MC-3
 ```text
-Tarea RF-3. Con build_preprocessor("base") y el split de la columna `split`, entrená RandomForestClassifier con
-parámetros por defecto (class_weight balanced, semilla de config), predecí en test y calculá F1 macro, Recall de
-Crítica y matriz de confusión con evaluate.py. Mostrame los números y compará con el baseline de logreg si ya
-existe (sin copiarle nada a A: solo leé su resultado de demanda.db).
+Tarea RF-3. Con build_preprocessor(cfg, "base") y el split de la columna `split`, entrená RandomForestClassifier con
+parámetros por defecto (class_weight balanced, semilla de config) mediante CV temporal de train.
+Calculá la referencia con evaluate.py; reservá test para RF-5, sin usarlo para elegir parámetros. Mostrame los números y, si está disponible, compará con el baseline
+de logreg usando las mismas fechas y protocolo de validación, sin confundirlo con una evaluación final en test.
 ```
 **Commits:** `test(RF-3): test de reproducibilidad` → `feat(RF-3): baseline de rf con el pipeline común`
 
@@ -197,9 +187,9 @@ existe (sin copiarle nada a A: solo leé su resultado de demanda.db).
 ```text
 Tarea RF-4. RandomizedSearchCV (n_iter=30, random_state=semilla) sobre Pipeline(prep+clf), cv=get_cv(cfg),
 scoring f1_macro, SOLO con train. Registrá mejores parámetros, cv_best_score y tiempo. Corrélo con el
-runner (MC-4) si ya existe. Mirá la brecha entre cv_best_score y F1 en test: con 246 filas un RF puede
-sobreajustar; si la brecha es grande, proponé restringir max_depth/min_samples_leaf en la spec (con commit
-docs) y no sólo en el código. Verificá que test no participa del ajuste.
+runner (MC-4) si ya existe. Analizá el sobreajuste con las particiones de entrenamiento/validación de la CV y documentá
+los cambios de búsqueda en la spec. La comparación con test se informa después, en RF-5,
+sin usarla para volver a ajustar parámetros.
 ```
 **Commits:** `feat(RF-4): RandomizedSearchCV con CV temporal` → `test(RF-4): test de que la búsqueda no usa test` → `docs(RF-4): resultados y análisis de sobreajuste`
 
@@ -208,7 +198,7 @@ docs) y no sólo en el código. Verificá que test no participa del ajuste.
 ```text
 Tarea RF-5. Evaluá el mejor RF en test con evaluate.py y repetí con los 3 feature_sets (base,
 con_participaciones, sin_potencia). Tabla comparativa por set. Interpretá cuánto depende de potencia_maxima y
-de las participaciones sectoriales. Solo conclusiones que los números sostengan (3 Alta en test).
+de las participaciones sectoriales. Solo conclusiones que los números sostengan, con conteos reales por clase.
 ```
 **Commits:** `feat(RF-5): evaluación en test` → `feat(RF-5): ablación por feature set` → `docs(RF-5): tabla comparativa`
 
@@ -222,7 +212,7 @@ semilla y split que logreg y xgb (config_modelo).
 **Commits:** `feat(RF-6): persiste runs de rf en Tablas 2 y 3` → `test(RF-6): verifica filas y JSON guardados`
 
 ### RF-7 · Notebook e interpretación
-**Depende de:** RF-6 · **Entregable:** `notebooks/03_rf.ipynb` + sección en `docs/model_card.md`
+**Depende de:** RF-6 · **Entregable:** `notebooks/03_rf.ipynb` + sección en `docs/08_entrega/model_card.md`
 ```text
 Tarea RF-7. Notebook que lee desde demanda.db. Importancia de variables por impureza Y por permutación
 (sklearn.inspection.permutation_importance sobre test) con nombres de get_feature_names_out; comentá por qué
@@ -237,9 +227,9 @@ de la deriva del pico estacional. Limitaciones honestas.
 **Depende de:** CMP-3 · **Rama:** `docs/CMP-4-analisis` · **Entregable:** `notebooks/05_comparacion.ipynb`
 ```text
 Tarea CMP-4. Notebook que lee compare_runs() de demanda.db y los gráficos de CMP-3. Aplicá los criterios de
-specs/03-comparacion.md (fijados ANTES de ver resultados) y respondé: qué modelo gana y por qué; diferencias
+docs/07_especificaciones/03-comparacion.md (fijados ANTES de ver resultados) y respondé: qué modelo gana y por qué; diferencias
 por clase (Recall de Crítica); costo (tiempo) vs beneficio; sensibilidad a potencia_maxima (ablación); qué tan
-confiable es la diferencia dado que test tiene 62 meses y 3 Alta (si podés, intervalos por bootstrap sobre
+confiable es la diferencia dados el tamaño y los conteos de clase de los runs evaluados (si podés, intervalos por bootstrap sobre
 test). No declares ganador si la diferencia está dentro del ruido: decilo.
 ```
 **Commits:** `docs(CMP-4): comparación de métricas según CMP-1` → `docs(CMP-4): análisis de incertidumbre y conclusiones`
@@ -261,15 +251,16 @@ variable de entorno RAPIDO=1 solo para el test).
 
 | ID | Tu parte |
 |---|---|
-| **T-01** | Redactar el contrato de preprocesado, evaluación y runner en `specs/00-contratos.md` |
+| **T-01** | Redactar el contrato de preprocesado, evaluación y runner en `docs/07_especificaciones/00-contratos.md` |
 | **CMP-1** | Proponer la métrica principal (F1 macro), el desempate (Recall de Crítica) y el tratamiento de la incertidumbre |
 | **CMP-5** | Decisión final del modelo |
 | **F-2** | Revisar los PRs de A |
 | **F-3 / F-4** | Sección "Núcleo de modelado y Random Forest" del informe; ensayo de demo |
 
-## Checklist final de B
+## Verificación personal de B
+
+El cierre formal está en el plan y el estado se registra en avance general. Antes de entregar, comprobá también:
+
 - [ ] Los 3 modelos usan el mismo `build_preprocessor`, `get_train_test`, `get_cv` y `evaluate` (sin duplicados).
 - [ ] Ninguna fila de test participa del ajuste, de la CV ni del `fit` del preprocesador.
-- [ ] `python -m demanda.models.train --model rf --features base` corre de punta a punta.
-- [ ] 7 tareas RF cerradas con 3+ commits cada una.
 - [ ] Puedo explicar por qué hay riesgo de sobreajuste con 246 filas.

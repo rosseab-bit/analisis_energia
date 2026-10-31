@@ -43,7 +43,7 @@ def load(
     """Reemplaza el contenido de las tablas del ETL (idempotente) y registra la auditoría.
 
     No toca predicciones / metricas_modelo / config_modelo: los resultados de los modelos se conservan
-    (si el ETL cambia las etiquetas, hay que volver a entrenar; ver GUIA_EQUIPO.md).
+    (si el ETL cambia las etiquetas, hay que volver a entrenar; ver docs/03_guias/GUIA_EQUIPO.md).
     """
     with conn:  # commit si todo sale bien, rollback ante cualquier error
         conn.execute("DELETE FROM datos_limpios")

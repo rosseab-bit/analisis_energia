@@ -1,68 +1,49 @@
-# Tareas del Integrante C — Infraestructura, Load del ETL, Visualización y XGBoost
+# Tareas de Angel Zambrano — Infraestructura, Load del ETL, Visualización y XGBoost
 
-Complementa a `PLAN_SDD.md` (qué y cuándo) y `GUIA_EQUIPO.md` (cómo). Cada ficha trae un **prompt listo para pegar en tu agente de IA** (Claude Code). Antes de pegar un prompt, seguí el *arranque de tarea* de `GUIA_EQUIPO.md §3` (rama nueva, `git pull`, agente abierto en la raíz del repo para que lea `CLAUDE.md`). La única excepción es **T-00**, que arranca antes de que exista el repo.
+Para ejecutar estas tareas de a poco, consultá [tu plan personal](PLAN_PERSONAL_ANGEL.md). Los pasos del plan no agregan nuevas tareas ni reemplazan sus dependencias.
+
+Complementa a `docs/02_planificacion/PLAN_SDD.md` (qué y cuándo) y `docs/03_guias/GUIA_EQUIPO.md` (cómo). Cada ficha trae un **prompt listo para pegar en tu agente de IA** (Claude Code). Antes de pegar un prompt, seguí el *arranque de tarea* de `docs/03_guias/GUIA_EQUIPO.md §3` (rama nueva, `git pull`, agente abierto en la raíz del repo para que lea `docs/03_guias/CLAUDE.md`). La única excepción es **T-00**, que arranca antes de que exista el repo.
+
+**Responsable: Angel Zambrano.** C se conserva como identificador interno en el nombre de esta ficha, `GH_USER_C`, `persona-C` y los marcadores `<C>` (tu usuario real de GitHub). Guía práctica: [Plan personal de Angel](PLAN_PERSONAL_ANGEL.md).
 
 **Tu foco:** dejar el repositorio y la CI funcionando desde el día 1 (de eso depende que los otros dos puedan trabajar), cargar los datos a SQLite de forma segura (Load), todo lo visual (gráficos y dashboard) y el modelo **XGBoost**.
 
-## Orden recomendado
+## Cómo elegir la siguiente tarea
 
-| Orden | Semana | Tarea | Por qué en este orden |
-|---|---|---|---|
-| 1 | 1 (día 1–2) | **T-00** Repo y esqueleto | **Bloquea a todos.** Hacela primero y avisá |
-| 2 | 1 | **T-15** CI | Cada PR posterior depende de este check |
-| 3 | 1 | **T-01** Reunión de arranque | Tu parte: redactar el contrato de visualización (`specs/04-visualizacion.md`) |
-| 4 | 1 | **XG-1** Spec del modelo | Sin dependencias; resolvé con B el contrato de `sample_weight` |
-| 5 | 1–2 | **ETL-4** Load y **VIZ-2** BD fixture | Necesitan `schema.sql` (T-03 de A) |
-| 6 | 2 | **ETL-5** Pipeline + CLI | Necesita ETL-1…4. **Desbloquea a B** (MC-1, MC-2, ETL-6) |
-| 7 | 2–3 | **VIZ-1** `plots.py` base y **XG-2** | |
-| 8 | 3–4 | **XG-3 → XG-7** | Tu modelo |
-| 9 | 4–5 | **CMP-3** gráficos de comparación y **V-1** dashboard | Cuando A entregue `compare_runs` |
-| 10 | 6 | CMP-1, CMP-5, F-2, F-3, F-4 | Cierre |
+El orden, responsables y dependencias se mantienen en el [plan SDD](../../02_planificacion/PLAN_SDD.md#5-tareas). Las fichas de abajo explican cómo ejecutar cada entrega; no mantienen un segundo calendario. Prepará borradores si falta una dependencia, pero no la des por cerrada ni implementes un contrato no aprobado.
 
 **Revisás los PRs de:** B (tus PRs los revisa A).
 
 ---
 
-## T-00 · Repo y esqueleto
-**Depende de:** nada · **Rama:** `main` (único commit directo permitido: el inicial) y luego `chore/T-00-esqueleto` · **Entregable:** repo clonable donde `pip install -e . && pytest` funciona
+## T-00 · Completar el repositorio y la infraestructura
+**Depende de:** nada · **Rama:** `chore/T-00-esqueleto` · **Entregable:** repo instalable y proceso de trabajo verificado.
 
-**Qué entra en T-00 y qué NO** (para que el historial muestre quién escribió cada parte):
-
-| Entra en T-00 (tuyo) | NO entra: lo incorpora su dueño en su tarea |
-|---|---|
-| `pyproject.toml`, `requirements.txt`, `.gitignore`, `config/config.yaml`, `CLAUDE.md`, `README.md` | `etl/extract.py`, `transform.py` (A) |
-| `src/demanda/__init__.py`, `config.py`, paquetes vacíos | `etl/validate.py` (B) |
-| `data/raw/demanda_electricidad_original_mensual1.csv` | `etl/load.py`, `pipeline.py` (C, en ETL-4/5) |
-| `PLAN_SDD.md`, `GUIA_EQUIPO.md`, `TAREAS_A/B/C.md`, `scripts/crear_issues.sh` | `schema.sql` (A, en T-03) |
-| `CODEOWNERS`, `.github/pull_request_template.md` | Todos los tests |
+El repo y el ETL de referencia ya están versionados. No recrear el repo, retirar módulos de otros integrantes ni hacer otro commit inicial directo en `main`.
 
 **Prompt para el agente**
 ```text
-Tarea T-00. Estoy en una carpeta con el contenido del zip del proyecto (proyecto-demanda/). Quiero armar el
-repositorio inicial SIN incluir todavía los módulos que tienen dueño en otras tareas (etl/extract.py,
-transform.py, validate.py, load.py, pipeline.py, schema.sql, scripts/run_etl.py y tests/).
-1) Mostrame qué archivos del zip van al commit inicial según la tabla de TAREAS_C.md (T-00) y cuáles se quedan
-   fuera. Guardá los que se quedan fuera en una carpeta ../referencia_etl (no la subas al repo).
-2) Creá CODEOWNERS con estas reglas (usuarios de GitHub en <A>, <B>, <C>): src/demanda/etl/extract.py y
-   transform.py, src/demanda/db/ y models/logreg.py -> <A>; etl/validate.py, models/{preprocessing,splits,
-   evaluate,train,rf}.py -> <B>; etl/load.py, etl/pipeline.py, viz/ y models/xgb.py -> <C>; specs/ y config/ -> todos.
-3) Creá .github/pull_request_template.md con: resumen, issue (Closes #), tareas hechas, cómo probarlo, checklist
-   del DoD de PLAN_SDD.md §6 y checklist del revisor de GUIA_EQUIPO.md.
-4) Escribí README.md corto: objetivo, requisitos, instalación, comandos (CLAUDE.md los lista) y enlaces.
-5) Verificá que `pip install -e .` funciona y que `python -c "from demanda.config import load_config; print(load_config()['semilla'])"`
-   imprime 42.
-Proponé los mensajes de commit (uno por bloque lógico: chore(T-00) para configuración, docs(T-00) para
-documentos). No hagas push; lo hago yo.
+Tarea T-00. Revisá el estado existente y completá solo la infraestructura pendiente.
+1) Verificá usuarios reales y mapa de dueños: A, extract/transform, db/ y logreg;
+   B, validate, módulos comunes y rf; Angel Zambrano, load/pipeline, CLI ETL, viz y xgb.
+   Specs y configuración son compartidas. Prepará CODEOWNERS sin usuarios inventados.
+2) Prepará .github/pull_request_template.md con resumen, Closes #N, validación,
+   definición de hecho del plan y checklist del revisor de la guía del equipo.
+3) Contrastá instalación y comandos con docs/00_inicio/README.md. Verificá el paquete,
+   load_config y la semilla esperada. Registrá errores sin ocultarlos.
+4) Revisá scripts/crear_issues.sh en modo de prueba. Las tareas provienen del plan;
+   no escribas otro catálogo ni ejecutes la publicación sin mi indicación.
+5) Mostrame cambios y evidencia, y proponé commits solo para cambios reales.
+   No hagas commit, push ni cambios remotos.
 ```
-**Pasos manuales en GitHub** (el agente no los hace):
-1. Crear el repo, subir los commits y **invitar a A y B** como colaboradores.
-2. `Settings → Branches → Add rule` para `main`: requerir PR, 1 aprobación, status checks (cuando exista T-15), **sin push directo**, sin force-push.
-3. `Settings → General → Pull Requests`: habilitar solo **"Allow merge commits"** (desactivar *squash* y dejar *rebase* opcional) para conservar los commits de cada uno.
-4. Ejecutar `scripts/crear_issues.sh` (ver `GUIA_EQUIPO.md §2`).
 
-**Aceptación:** los otros dos clonan, instalan y corren `python -c "…load_config…"` sin errores · `main` protegida · issues creados.
+**Configuración que debe confirmar la persona con permisos de administración:** acceso de A/B, PR y aprobación en `main`, sin force-push, merge commits sin squash. El check obligatorio se incorpora después de ejecutar T-15. Confirmar que A/B instalan sus copias.
 
-**Commits:** `chore(T-00): estructura, pyproject y configuración inicial` → `docs(T-00): plan, guía y fichas de tareas` → `chore(T-00): CODEOWNERS y plantilla de PR` → `docs(T-00): README con instalación y comandos`
+**Issues:** el único generador es `scripts/crear_issues.sh`; funciona con Bash 3.2 y Python 3 estándar. `DRY_RUN=1 bash scripts/crear_issues.sh` valida sin `gh` ni cambios externos. Para publicar requiere `gh` autenticado y `GH_USER_A/B/C`; si ya hay issues, se completan manualmente para evitar duplicados.
+
+**Aceptación:** instalación y configuración verificadas por el equipo; dueños, plantilla, acceso y reglas confirmados; issues organizados y seguimiento disponible. Los borradores de archivos no acreditan por sí solos la configuración remota.
+
+**Ejemplos de commits si corresponden al diff:** `chore(T-00): define dueños y plantilla de PR`, `docs(T-00): aclara instalación verificada`. La definición de hecho exige aportes reales, no recrear archivos para cumplir un número.
 
 ---
 
@@ -71,8 +52,7 @@ documentos). No hagas push; lo hago yo.
 ```text
 Tarea T-15. Creá .github/workflows/ci.yml que en cada push y pull_request: use Python 3.11 con caché de pip,
 instale requirements.txt y `pip install -e .`, corra `ruff check src tests` y `pytest -q`. Un solo job
-llamado "test". Si todavía no hay tests, que `pytest` no falle por "no tests collected" (usá
-`pytest -q || [ $? -eq 5 ]` y dejá un comentario que lo explique, a eliminar cuando entre el primer test).
+llamado "test". Ya existen tests: no tolerar "no tests collected" ni ocultar fallos de lint o pytest.
 Después de mergear, indicame cómo marcar el job "test" como required check en la regla de protección de main.
 ```
 **Aceptación:** el job corre en un PR de prueba y queda como *required* · falla si el lint o un test falla.
@@ -88,7 +68,7 @@ Después de mergear, indicame cómo marcar el job "test" como required check en 
 
 **Prompt para el agente**
 ```text
-Tarea ETL-4 (Load). Seguí CLAUDE.md y specs/01-datos.md (criterios ETL-7 y ETL-8). Tests primero
+Tarea ETL-4 (Load). Seguí docs/03_guias/CLAUDE.md y docs/07_especificaciones/01-datos.md (criterios ETL-7 y ETL-8). Tests primero
 (tests/test_load.py) con una BD temporal (tempfile), después implementación.
 Funciones: connect(db_path), init_schema(conn, schema_path, reset=False) y
 load(conn, datos_limpios, distribuidoras, auditoria) -> dict.
@@ -101,7 +81,7 @@ borra los resultados de modelos y reset=False los conserva.
 ```
 **Aceptación:** los 5 comportamientos probados · sin SQL armado con datos del usuario (solo `?` para valores).
 
-**Commits:** `test(ETL-4): tests de idempotencia, NULL, rollback y reset` → `feat(ETL-4): carga transaccional e idempotente` → `feat(ETL-4): auditoría de corrida con SHA-256` → `docs(ETL-4): política de re-ejecución en GUIA_EQUIPO.md`
+**Commits:** `test(ETL-4): tests de idempotencia, NULL, rollback y reset` → `feat(ETL-4): carga transaccional e idempotente` → `feat(ETL-4): auditoría de corrida con SHA-256` → `docs(ETL-4): política de re-ejecución en docs/03_guias/GUIA_EQUIPO.md`
 
 **Revisá vos:** el test de rollback debe romper algo *a mitad de la carga* (no antes de empezar) para probar de verdad la atomicidad.
 
@@ -162,27 +142,28 @@ humo con la fixture (VIZ-2): cada función devuelve una figura y no lanza con un
 ---
 
 ## XG-1 … XG-7 · Modelo XGBoost
-Archivos: `specs/02-modelo-xgb.md`, `src/demanda/models/xgb.py`, `tests/test_xgb.py`, `notebooks/04_xgb.ipynb`. Mismo preprocesador, split, CV y `evaluate` que los otros dos (no los reimplementes).
+Archivos: `docs/07_especificaciones/02-modelo-xgb.md`, `src/demanda/models/xgb.py`, `tests/test_xgb.py`, `notebooks/04_xgb.ipynb`. Mismo preprocesador, split, CV y `evaluate` que los otros dos (no los reimplementes).
 
 ### XG-1 · Spec del modelo
-**Depende de:** T-01 · **Entregable:** `specs/02-modelo-xgb.md` + acuerdo con B
+**Depende de:** T-01 · **Entregable:** `docs/07_especificaciones/02-modelo-xgb.md` + acuerdo con B
 ```text
-Tarea XG-1. Escribí specs/02-modelo-xgb.md: por qué XGBoost (boosting, interacciones no lineales), y los DOS puntos
+Tarea XG-1. Escribí docs/07_especificaciones/02-modelo-xgb.md: por qué XGBoost (boosting, interacciones no lineales), y los DOS puntos
 delicados: (1) etiquetas: XGBoost requiere clases enteras; el módulo debe codificar/decodificar
 internamente para que el sistema siga viendo "Normal/Alta/Crítica"; (2) desbalance: en multiclase no hay
-class_weight; se usa sample_weight=compute_sample_weight("balanced", y_train) pasado al fit. Propuesta de
-contrato para el runner: el módulo declara NEEDS_SAMPLE_WEIGHT = True y el runner pasa
-fit_params={"clf__sample_weight": ...}. Espacio de RandomizedSearchCV (n_estimators [100,200,400],
+class_weight; se usan pesos balanceados. Acordá con B el contrato NEEDS_SAMPLE_WEIGHT y dónde se calculan:
+cada fit de CV debe calcularlos solo con las filas de entrenamiento de su fold; el ajuste final usa
+train completo. Documentá la interfaz elegida antes del código. Pasar un vector calculado con todo
+train no resuelve la independencia de cada fold. Espacio de RandomizedSearchCV (n_estimators [100,200,400],
 max_depth [3,5,7], learning_rate [0.03,0.1,0.3], subsample/colsample_bytree [0.7,0.9,1.0], reg_lambda
 [1,5,10], n_iter=30; justificá con 246 filas de train). Criterios de aceptación de XG-2…XG-7. Sin código.
-Dejá el contrato NEEDS_SAMPLE_WEIGHT como PR a specs/00-contratos.md para que lo apruebe B (MC-4).
+Dejá el contrato NEEDS_SAMPLE_WEIGHT como PR a docs/07_especificaciones/00-contratos.md para que lo apruebe B (MC-4).
 ```
 **Commits:** `docs(XG-1): justifica el modelo, etiquetas enteras y sample_weight` → `docs(XG-1): espacio de búsqueda y criterios` → `docs(XG-1): propone contrato NEEDS_SAMPLE_WEIGHT`
 
 ### XG-2 · Módulo del modelo
 **Depende de:** XG-1, T-03 · **Entregable:** `models/xgb.py` + `tests/test_xgb.py`
 ```text
-Tarea XG-2. Tests primero. Implementá src/demanda/models/xgb.py con el contrato de CLAUDE.md: NAME="xgb",
+Tarea XG-2. Tests primero. Implementá src/demanda/models/xgb.py con el contrato de docs/02_planificacion/PLAN_SDD.md §2.4: NAME="xgb",
 SEARCH="random", NEEDS_SAMPLE_WEIGHT=True, get_estimator(random_state), get_param_grid() (claves "clf__..."),
 get_n_iter() -> 30. get_estimator debe devolver un estimador compatible con sklearn que ACEPTE y DEVUELVA las
 etiquetas de texto ("Normal","Alta","Crítica"): un wrapper (o subclase de XGBClassifier) que codifique con
@@ -195,11 +176,11 @@ runner y save_run deben mapear las probabilidades por NOMBRE de clase, no por po
 **Commits:** `test(XG-2): tests de etiquetas de texto, clone y sample_weight` → `feat(XG-2): wrapper de XGBClassifier con etiquetas de texto` → `docs(XG-2): orden de classes_ y mapeo de probabilidades`
 
 ### XG-3 · Baseline
-**Depende de:** XG-2, MC-1, MC-2
+**Depende de:** XG-2, MC-1, MC-2, MC-3
 ```text
-Tarea XG-3. Con build_preprocessor("base") y el split de la columna `split`, entrená XGBoost con parámetros por
-defecto y sample_weight balanceado, predecí en test y calculá F1 macro, Recall de Crítica y matriz de
-confusión con evaluate.py. Mostrame los números. Verificá que sample_weight realmente se usa (compará con y
+Tarea XG-3. Con build_preprocessor(cfg, "base") y el split de la columna `split`, entrená XGBoost con parámetros por
+defecto y sample_weight balanceado, obtené métricas de referencia mediante la validación temporal de train con evaluate.py.
+No uses test para comparar decisiones de pesos ni seleccionar parámetros. Mostrame los números. Verificá que sample_weight realmente se usa (compará con y
 sin él) y reportá la diferencia.
 ```
 **Commits:** `test(XG-3): test de reproducibilidad` → `feat(XG-3): baseline de xgb con sample_weight`
@@ -208,11 +189,10 @@ sin él) y reportá la diferencia.
 **Depende de:** XG-3
 ```text
 Tarea XG-4. RandomizedSearchCV (n_iter=30, random_state=semilla) sobre Pipeline(prep+clf), cv=get_cv(cfg),
-scoring f1_macro, fit_params con clf__sample_weight, SOLO con train. Ojo: el sample_weight debe
-recalcularse con las filas de cada fold, no con todo train (si no, se filtra información del fold de
-validación); si el runner pasa el vector entero, comprobá cómo se alinea con los folds y documentá la
-solución elegida (por ejemplo, calcularlo dentro de un paso del pipeline). Registrá mejores parámetros,
-cv_best_score y tiempo; mirá la brecha entre CV y test.
+scoring f1_macro, SOLO con train y el contrato de pesos aprobado en XG-1. Probá que cada fit calcula
+los pesos solo con las clases y filas de entrenamiento de su fold, sin frecuencias de validación.
+No basta con alinear un vector balanceado previamente sobre todo train. Registrá mejores parámetros,
+cv_best_score y tiempo. La comparación con test se informa después, en XG-5, sin usarla para ajustar la búsqueda.
 ```
 **Commits:** `feat(XG-4): RandomizedSearchCV con CV temporal` → `test(XG-4): test de alineación de sample_weight por fold` → `docs(XG-4): resultados y decisión sobre sample_weight`
 
@@ -220,7 +200,7 @@ cv_best_score y tiempo; mirá la brecha entre CV y test.
 **Depende de:** XG-4, MC-3
 ```text
 Tarea XG-5. Evaluá el mejor XGBoost en test con evaluate.py y repetí con los 3 feature_sets (base,
-con_participaciones, sin_potencia). Tabla comparativa y lectura honesta (hay 3 Alta en test).
+con_participaciones, sin_potencia). Tabla comparativa y lectura honesta, con conteos de clase medidos en la corrida evaluada.
 ```
 **Commits:** `feat(XG-5): evaluación en test` → `feat(XG-5): ablación por feature set` → `docs(XG-5): tabla comparativa`
 
@@ -235,7 +215,7 @@ matriz de confusión parseable, mismos semilla y split que logreg y rf.
 **Commits:** `feat(XG-6): persiste runs de xgb en Tablas 2 y 3` → `test(XG-6): verifica probabilidades por clase y JSON`
 
 ### XG-7 · Notebook e interpretación
-**Depende de:** XG-6 · **Entregable:** `notebooks/04_xgb.ipynb` + sección en `docs/model_card.md`
+**Depende de:** XG-6 · **Entregable:** `notebooks/04_xgb.ipynb` + sección en `docs/08_entrega/model_card.md`
 ```text
 Tarea XG-7. Notebook que lee desde demanda.db: métricas, matriz de confusión, importancia por gain (y SHAP si hay
 tiempo y la librería está en requirements), y análisis de errores (meses confundidos, deriva del pico
@@ -251,8 +231,8 @@ estacional). Limitaciones honestas.
 Tarea CMP-3. Agregá a plots.py (funciones puras que reciben el DataFrame de compare_runs y/o las
 matrices de confusión): plot_metricas_por_modelo (barras agrupadas de accuracy, precision, recall y F1 macro),
 plot_matrices_confusion (una por modelo, lado a lado, misma escala), plot_f1_por_clase, plot_tiempos y
-plot_ablacion (F1 macro por modelo × feature set). Incluí en cada gráfico el n_test y una nota "test = 62
-meses; 3 Alta" cuando corresponda para no sobreinterpretar. Tests de humo con la fixture VIZ-2.
+plot_ablacion (F1 macro por modelo × feature set). Incluí en cada gráfico el n_test y los conteos de clase de los runs comparados,
+sin hardcodear cifras del ETL de referencia. Tests de humo con la fixture VIZ-2.
 ```
 **Commits:** `test(CMP-3): tests de humo con la fixture` → `feat(CMP-3): métricas y matrices de confusión comparadas` → `feat(CMP-3): F1 por clase, tiempos y ablación`
 
@@ -276,15 +256,15 @@ traceback. Test de humo con streamlit.testing.v1.AppTest sobre la BD fixture.
 
 | ID | Tu parte |
 |---|---|
-| **T-01** | Redactar `specs/04-visualizacion.md` (qué muestra el dashboard) y presentar la estructura del repo |
+| **T-01** | Redactar `docs/07_especificaciones/04-visualizacion.md` (qué muestra el dashboard) y presentar la estructura del repo |
 | **CMP-1** | Aportar criterios de presentación de la comparación (qué se grafica y cómo se advierte la incertidumbre) |
 | **CMP-5** | Decisión final del modelo |
 | **F-2** | Revisar los PRs de B |
 | **F-3 / F-4** | Sección "Infraestructura, visualización y XGBoost" del informe; ensayo de demo |
 
-## Checklist final de C
-- [ ] Clono el repo en una carpeta vacía, sigo el README y `python scripts/run_etl.py` + `streamlit run …` funcionan.
-- [ ] CI verde y obligatoria en `main`; solo merge commits permitidos.
-- [ ] 7 tareas XG cerradas con 3+ commits cada una.
+## Verificación personal de Angel Zambrano
+
+El cierre formal está en el plan y el estado se registra en avance general. Antes de entregar, comprobá también:
+
 - [ ] El dashboard no se rompe sin datos.
 - [ ] Puedo explicar la atomicidad de la carga y por qué `classes_` está en orden alfabético.

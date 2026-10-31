@@ -1,35 +1,25 @@
 # Tareas del Integrante A — Datos, Base de datos y Logistic Regression
 
-Complementa a `PLAN_SDD.md` (qué y cuándo) y `GUIA_EQUIPO.md` (cómo). Cada ficha trae un **prompt listo para pegar en tu agente de IA** (Claude Code). Antes de pegar cualquier prompt, seguí el *arranque de tarea* de `GUIA_EQUIPO.md §3` (rama nueva, `git pull`, agente abierto en la raíz del repo para que lea `CLAUDE.md`).
+Complementa a `docs/02_planificacion/PLAN_SDD.md` (qué y cuándo) y `docs/03_guias/GUIA_EQUIPO.md` (cómo). Cada ficha trae un **prompt listo para pegar en tu agente de IA** (Claude Code). Antes de pegar cualquier prompt, seguí el *arranque de tarea* de `docs/03_guias/GUIA_EQUIPO.md §3` (rama nueva, `git pull`, agente abierto en la raíz del repo para que lea `docs/03_guias/CLAUDE.md`).
 
 **Tu foco:** que los datos entren limpios y trazables a SQLite, la capa de persistencia (`repository`) y el modelo **Logistic Regression**.
 
-## Orden recomendado
+## Cómo elegir la siguiente tarea
 
-| Orden | Semana | Tarea | Por qué en este orden |
-|---|---|---|---|
-| 1 | 1 | **T-02** Diccionario de datos | No depende de nadie; fija unidades y hallazgos antes de la reunión |
-| 2 | 1 | **T-01** Reunión de arranque (con B y C) | Cierra D1–D7; tu parte: redactar `specs/01-datos.md` |
-| 3 | 1 | **ETL-1** Extract | Primer eslabón del ETL |
-| 4 | 1 | **T-03** `schema.sql` | Desbloquea a C (ETL-4) y a tu DB-2 |
-| 5 | 1–2 | **ETL-3** Transform | Aplica la decisión D1 |
-| 6 | 2 | **DB-2** `save_run` y **DB-1** `load_clean_data` | Desbloquea el runner de B |
-| 7 | 2–4 | **LR-1 → LR-7** | Tu modelo (LR-1 y LR-2 se pueden empezar en la semana 1) |
-| 8 | 4 | **CMP-2** `compare_runs` | Cuando B y C tengan su `run_id` |
-| 9 | 4–6 | CMP-1, CMP-5, F-2, F-3, F-4 | Tareas conjuntas |
+El orden, responsables y dependencias se mantienen en el [plan SDD](../../02_planificacion/PLAN_SDD.md#5-tareas). Las fichas de abajo explican cómo ejecutar cada entrega; no mantienen un segundo calendario. Prepará borradores si falta una dependencia, pero no la des por cerrada ni implementes un contrato no aprobado.
 
-**Revisás los PRs de:** C (rotación A→B→C→A, tus PRs los revisa B).
+**Revisás los PRs de:** Angel Zambrano (rotación A→B→Angel Zambrano→A, tus PRs los revisa B).
 
 ---
 
 ## T-02 · Diccionario de datos y unidades
-**Depende de:** T-00 · **Rama:** `docs/T-02-diccionario` · **Entregable:** `docs/data_dictionary.md`
+**Depende de:** T-00 · **Rama:** `docs/T-02-diccionario` · **Entregable:** `docs/06_datos/data_dictionary.md`
 
 **Contexto:** el zip trae un diccionario base con los hallazgos ya verificados. Tu trabajo es validarlo contra el CSV y completar lo que no se puede inferir (unidades).
 
 **Prompt para el agente**
 ```text
-Tarea T-02. Revisá docs/data_dictionary.md contra data/raw/demanda_electricidad_original_mensual1.csv.
+Tarea T-02. Revisá docs/06_datos/data_dictionary.md contra data/raw/demanda_electricidad_original_mensual1.csv.
 1) Con pandas, verificá cada afirmación numérica del documento (rangos, nulos por columna, cobertura de
    distribuidoras, suma de sectores = demanda_total, correlación de potencia_maxima). Mostrame el comando y
    el resultado de cada verificación. Si algo no coincide, corregí el documento.
@@ -55,7 +45,7 @@ No toques código ni config.
 
 **Prompt para el agente**
 ```text
-Tarea ETL-1 (Extract). Seguí CLAUDE.md y specs/01-datos.md (criterio ETL-1).
+Tarea ETL-1 (Extract). Seguí docs/03_guias/CLAUDE.md y docs/07_especificaciones/01-datos.md (criterio ETL-1).
 Orden obligatorio: 1) escribí primero los tests en tests/test_extract.py, 2) implementá
 src/demanda/etl/extract.py, 3) documentá. Usá como punto de partida el archivo de referencia que te
 paso, pero explicame cada decisión.
@@ -80,7 +70,7 @@ espacios/mayúsculas, huella estable entre dos lecturas.
 
 **Prompt para el agente**
 ```text
-Tarea T-03. Revisá src/demanda/db/schema.sql contra docs/data_dictionary.md y specs/01-datos.md.
+Tarea T-03. Revisá src/demanda/db/schema.sql contra docs/06_datos/data_dictionary.md y docs/07_especificaciones/01-datos.md.
 Verificá: clave primaria `fecha` en datos_limpios, CHECKs (etiqueta en Normal/Alta/Crítica, split train/test,
 mes 1..12), `CREATE TABLE IF NOT EXISTS` en todo, tablas de resultados (predicciones, metricas_modelo,
 config_modelo) con las columnas del contrato. Escribí tests/test_schema.py que cree una BD vacía, verifique
@@ -102,21 +92,22 @@ es rechazado. Hacé cambios mínimos y justificá cada uno.
 
 **Prompt para el agente**
 ```text
-Tarea ETL-3 (Transform). Seguí CLAUDE.md y specs/01-datos.md (criterios ETL-3, 5, 6, 9) y las decisiones
+Tarea ETL-3 (Transform). Seguí docs/03_guias/CLAUDE.md y docs/07_especificaciones/01-datos.md (criterios ETL-3, 5, 6, 9) y las decisiones
 D1–D7 aprobadas en T-01. Tests primero (tests/test_transform.py), después implementación.
 Reglas no negociables: (a) los nulos de sectores y distribuidoras NO se imputan; (b) los umbrales de la
-etiqueta (percentiles) se calculan SOLO con las filas de train; (c) el split es cronológico con la
+etiqueta, incluidos scores y percentiles de train, no dependen de test; (c) el split es cronológico con la
 fracción de config.yaml; (d) la salida tiene exactamente las columnas de la tabla datos_limpios.
 Tests obligatorios: participaciones suman 1 donde hay sectores; estación correcta en dic/ene (hemisferio
-sur); cambiar los datos de test NO modifica los umbrales (test "sin fuga"); método de etiqueta
+sur); cambiar los datos de test NO modifica scores, umbrales ni etiquetas de train, probando el método
+configurado y las alternativas soportadas (test "sin fuga"); método de etiqueta
 desconocido lanza ValueError; las distribuidoras salen en formato largo sin nulos.
 Después corré el ETL sobre el CSV real y mostrame la distribución de etiquetas por split.
 ```
-**Aceptación:** `pytest tests/test_transform.py` verde · test "sin fuga" presente y significativo · la distribución sobre el CSV real coincide con la documentada (train: 184 Normal / 37 Alta / 25 Crítica con el método por defecto) **o** el cambio está justificado por una decisión de T-01.
+**Aceptación:** `pytest tests/test_transform.py` verde · independencia temporal del método elegido demostrada · distribución real registrada con la decisión aprobada, sin exigir conservar conteos del método defectuoso de referencia.
 
-**Commits:** `test(ETL-3): tests de calendario, participaciones y sin fuga` → `feat(ETL-3): implementa features de calendario y participaciones` → `feat(ETL-3): implementa etiqueta con umbrales de train y split cronológico` → `docs(ETL-3): documenta método de etiqueta en specs/01-datos.md`
+**Commits:** `test(ETL-3): tests de calendario, participaciones y sin fuga` → `feat(ETL-3): implementa features de calendario y participaciones` → `feat(ETL-3): implementa etiqueta con umbrales de train y split cronológico` → `docs(ETL-3): documenta método de etiqueta en docs/07_especificaciones/01-datos.md`
 
-**Revisá vos:** el test "sin fuga": modificá a mano un valor de test y comprobá que el umbral no se mueve.
+**Revisá vos:** el test "sin fuga": modificar solo test debe dejar intactos los cálculos de train; no alcanza probar una alternativa distinta de la configurada.
 
 ---
 
@@ -139,11 +130,11 @@ save_run(run_id, predictions_df, metrics_dict, config_dict, db_path=None) -> Non
 - run_id repetido => error claro (no sobrescribir en silencio). db_path por defecto desde config.yaml.
 Tests primero con una BD temporal: guarda y relee las 3 tablas; run_id duplicado falla; si falla la
 inserción de predicciones no queda NADA en metricas_modelo (rollback); los JSON se pueden leer de vuelta.
-Documentá estas claves en specs/00-contratos.md (es un contrato con B y C, abrilo como PR aparte si T-01 ya está mergeado).
+Documentá estas claves en docs/07_especificaciones/00-contratos.md (es un contrato con B y Angel Zambrano, abrilo como PR aparte si T-01 ya está mergeado).
 ```
-**Aceptación:** transacción única · rollback comprobado por test · contrato documentado y aprobado por B y C.
+**Aceptación:** transacción única · rollback comprobado por test · contrato documentado y aprobado por B y Angel Zambrano.
 
-**Commits:** `docs(DB-2): documenta el contrato de save_run en specs/00-contratos.md` → `test(DB-2): tests de persistencia, duplicados y rollback` → `feat(DB-2): implementa save_run transaccional`
+**Commits:** `docs(DB-2): documenta el contrato de save_run en docs/07_especificaciones/00-contratos.md` → `test(DB-2): tests de persistencia, duplicados y rollback` → `feat(DB-2): implementa save_run transaccional`
 
 **Revisá vos:** que `run_id` duplicado no pise resultados de otro modelo.
 
@@ -168,13 +159,13 @@ las columnas son exactamente las de la tabla; está ordenado. No recalcules etiq
 ---
 
 ## LR-1 … LR-7 · Modelo Logistic Regression
-Prefijo `LR-`. Rama `feat/LR-N-<slug>`. Archivos: `specs/02-modelo-logreg.md`, `src/demanda/models/logreg.py`, `tests/test_logreg.py`, `notebooks/02_logreg.ipynb`.
+Prefijo `LR-`. Rama `feat/LR-N-<slug>`. Archivos: `docs/07_especificaciones/02-modelo-logreg.md`, `src/demanda/models/logreg.py`, `tests/test_logreg.py`, `notebooks/02_logreg.ipynb`.
 Todas las tareas usan el **mismo preprocesador, split, CV y `evaluate`** que los otros dos modelos: no los reimplementes.
 
 ### LR-1 · Spec del modelo
-**Depende de:** T-01 · **Entregable:** `specs/02-modelo-logreg.md`
+**Depende de:** T-01 · **Entregable:** `docs/07_especificaciones/02-modelo-logreg.md`
 ```text
-Tarea LR-1. Escribí specs/02-modelo-logreg.md: por qué Logistic Regression en este problema (baseline
+Tarea LR-1. Escribí docs/07_especificaciones/02-modelo-logreg.md: por qué Logistic Regression en este problema (baseline
 lineal e interpretable, necesita escalado), tratamiento del desbalance (class_weight='balanced'), la grilla
 de GridSearchCV (C en [0.01,0.1,1,10,100], solver lbfgs/saga, penalty l2; justificá el rango), el scoring
 (f1_macro) y los criterios de aceptación de LR-2…LR-7. Mencioná la limitación: 246 meses de train y la clase
@@ -185,7 +176,7 @@ Alta es chica. No escribas código.
 ### LR-2 · Módulo del modelo
 **Depende de:** LR-1, T-03 · **Entregable:** `models/logreg.py` + `tests/test_logreg.py`
 ```text
-Tarea LR-2. Tests primero. Implementá src/demanda/models/logreg.py con el contrato de modelos de CLAUDE.md:
+Tarea LR-2. Tests primero. Implementá src/demanda/models/logreg.py con el contrato de modelos de docs/03_guias/CLAUDE.md:
 NAME="logreg", SEARCH="grid", get_estimator(random_state) -> LogisticRegression(max_iter=2000,
 class_weight="balanced", random_state=random_state), get_param_grid() con claves "clf__C", "clf__solver",
 "clf__penalty" según la spec LR-1, get_n_iter() -> None. Tests: el estimador tiene predict_proba y
@@ -195,11 +186,11 @@ No toques otros archivos de models/.
 **Commits:** `test(LR-2): test del contrato del módulo logreg` → `feat(LR-2): implementa logreg con class_weight balanced` → `docs(LR-2): docstrings`
 
 ### LR-3 · Baseline sin tuning
-**Depende de:** LR-2, MC-1, MC-2 · **Entregable:** baseline reproducible + métrica de referencia
+**Depende de:** LR-2, MC-1, MC-2, MC-3 · **Entregable:** baseline reproducible + métrica de referencia
 ```text
 Tarea LR-3. Con el pipeline común (build_preprocessor del set "base") y el split de la columna `split`,
-entrená LogisticRegression con parámetros por defecto (sin búsqueda), predecí en test y calculá F1 macro,
-Recall de Crítica y la matriz de confusión con evaluate.py (no reimplementes métricas). Dejalo como
+entrená LogisticRegression con parámetros por defecto (sin búsqueda) mediante CV temporal de train.
+Calculá la referencia con evaluate.py; reservá test para LR-5 y no lo uses para elegir parámetros. Dejalo como
 función/script reproducible con la semilla de config.yaml y mostrame los números. Si MC-1/MC-2 no están
 mergeados, usá el contrato y avisame qué stub usaste.
 ```
@@ -223,7 +214,7 @@ Tarea LR-5. Evaluá el mejor modelo en test con evaluate.py: Accuracy, Precision
 clase) y matriz de confusión. Repetí con los 3 feature_sets de config.yaml (base, con_participaciones,
 sin_potencia) y armá una tabla comparativa. Para con_participaciones usá solo filas con tiene_sectores=1
 (set con solo_con_sectores=true). Interpretá: ¿cuánto depende el modelo de potencia_maxima? No saques
-conclusiones que los números no sostengan; hay solo 3 Alta en test.
+conclusiones que los números no sostengan; reportá los conteos de clase de la corrida real.
 ```
 **Commits:** `feat(LR-5): evaluación en test con evaluate.py` → `feat(LR-5): ablación de features` → `docs(LR-5): tabla comparativa de feature sets`
 
@@ -238,7 +229,7 @@ que features_usadas coincide con el set elegido. Correlo con la BD real generada
 **Commits:** `feat(LR-6): persiste runs de logreg en Tablas 2 y 3` → `test(LR-6): verifica filas y JSON guardados`
 
 ### LR-7 · Notebook e interpretación
-**Depende de:** LR-6 · **Entregable:** `notebooks/02_logreg.ipynb` + sección en `docs/model_card.md`
+**Depende de:** LR-6 · **Entregable:** `notebooks/02_logreg.ipynb` + sección en `docs/08_entrega/model_card.md`
 ```text
 Tarea LR-7. Notebook que lee SOLO desde demanda.db (no reentrena): métricas, matriz de confusión,
 coeficientes por clase con los nombres de columnas del preprocesador (usá get_feature_names_out) y gráfico
@@ -255,8 +246,8 @@ del pico). Cerrá con limitaciones honestas (muestra chica, clase Alta casi ause
 Tarea CMP-2. Agregá a repository.py compare_runs(run_ids=None, db_path=None) -> pd.DataFrame con una fila
 por run: modelo, feature set, accuracy, precision/recall/F1 macro, F1 y recall de cada clase, cv_best_score,
 tiempo y n_test. Verificá que todos los runs comparados comparten el mismo split y semilla (config_modelo) y
-avisá si no. Tests con la BD fixture de C (VIZ-2): ordena por f1_macro, filtra por run_ids, advierte si hay
-semillas distintas. Sin lógica de decisión: el criterio de elección está en specs/03-comparacion.md.
+avisá si no. Tests con la BD fixture de Angel Zambrano (VIZ-2): ordena por f1_macro, filtra por run_ids, advierte si hay
+semillas distintas. Sin lógica de decisión: el criterio de elección está en docs/07_especificaciones/03-comparacion.md.
 ```
 **Commits:** `test(CMP-2): tests de ordenamiento, filtro y semillas` → `feat(CMP-2): implementa compare_runs` → `docs(CMP-2): documenta columnas devueltas`
 
@@ -266,14 +257,14 @@ semillas distintas. Sin lógica de decisión: el criterio de elección está en 
 
 | ID | Tu parte |
 |---|---|
-| **T-01** | Redactar `specs/01-datos.md` (decisiones D1–D7) y presentar los hallazgos del ETL |
+| **T-01** | Redactar `docs/07_especificaciones/01-datos.md` (decisiones D1–D7) y presentar los hallazgos del ETL |
 | **CMP-1** | Aportar los criterios de comparación; proponer la métrica de desempate |
 | **CMP-5** | Decisión final del modelo aplicando CMP-1 |
-| **F-2** | Revisar los PRs de C |
+| **F-2** | Revisar los PRs de Angel Zambrano |
 | **F-3 / F-4** | Sección "Datos, ETL y Logistic Regression" del informe; ensayo de demo |
 
-## Checklist final de A
-- [ ] `python scripts/run_etl.py` regenera `demanda.db` desde cero.
-- [ ] `save_run`, `load_clean_data` y `compare_runs` con tests verdes.
-- [ ] 7 tareas LR cerradas con 3+ commits cada una.
+## Verificación personal de A
+
+El cierre formal está en el plan y el estado se registra en avance general. Antes de entregar, comprobá también:
+
 - [ ] Puedo explicar la etiqueta, el split y por qué no hay fuga.

@@ -1,0 +1,67 @@
+Verificación local del 30 de octubre de 2026. Código base: ba0b9e2.
+
+## Python
+$ .venv/bin/python --version
+exit_code=0
+Python 3.12.16
+
+## pip
+$ .venv/bin/python -m pip --version
+exit_code=0
+pip 26.2.2 from /Users/zambrano.angel/Desktop/Personal/analisis_energia/.venv/lib/python3.12/site-packages/pip (python 3.12)
+
+## Dependencias
+$ .venv/bin/python -m pip check
+exit_code=0
+No broken requirements found.
+
+## Configuración
+$ .venv/bin/python -c "from demanda.config import load_config; print(load_config()['semilla'])"
+exit_code=0
+42
+
+## Lint
+$ .venv/bin/python -m ruff check src tests
+exit_code=1
+RUF046 Value being cast to `int` is already an integer
+  --> src/demanda/etl/transform.py:60:13
+   |
+58 | def asignar_split(n: int, fraccion_test: float) -> np.ndarray:
+59 |     """Split cronológico: los últimos meses son test (nunca aleatorio en series temporales)."""
+60 |     corte = int(round(n * (1 - fraccion_test)))
+   |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+61 |     return np.where(np.arange(n) < corte, "train", "test")
+   |
+help: Remove unnecessary `int` call
+   |
+59 |     """Split cronológico: los últimos meses son test (nunca aleatorio en series temporales)."""
+   -     corte = int(round(n * (1 - fraccion_test)))
+60 +     corte = round(n * (1 - fraccion_test))
+61 |     return np.where(np.arange(n) < corte, "train", "test")
+   |
+note: This is an unsafe fix and may change runtime behavior
+
+F401 [*] `numpy` imported but unused
+ --> src/demanda/etl/validate.py:6:17
+  |
+4 | from dataclasses import dataclass, field
+5 |
+6 | import numpy as np
+  |                 ^^
+7 | import pandas as pd
+  |
+help: Remove unused import: `numpy`
+  |
+5 |
+  - import numpy as np
+6 | import pandas as pd
+  |
+
+Found 2 errors.
+[*] 1 fixable with `--fix` (1 unsafe fix available with `--fix --unsafe-fixes`).
+
+## Tests
+$ .venv/bin/python -m pytest -q
+exit_code=0
+.............................                                         [100%]
+29 passed, 3 subtests passed in 19.51s
