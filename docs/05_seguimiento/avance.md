@@ -1,6 +1,6 @@
 # Avance general del proyecto final
 
-Última revisión: **30 de octubre de 2026**. Estado del checkout local sobre `96fafa6`, con cambios documentales sin commit en `docs/T-00-guia-angel`.
+Última revisión: **31 de octubre de 2026**, para confirmar identidades e invitaciones y preparar la revisión de T-00. Los archivos están en `docs/T-00-guia-angel`, pendientes de revisión e integración; el fetch del 31 de octubre confirmó `main` en `96fafa6`.
 
 **Situación actual:** dataset disponible, Git operativo y ETL funcional probado; hay una corrección temporal pendiente en la etiqueta. Todavía no están implementados los modelos, sus resultados persistidos, las visualizaciones, el dashboard o la presentación en la copia revisada.
 
@@ -33,7 +33,7 @@ Referencia: contenido visible de [Proyecto_Final.pdf](../01_consigna/Proyecto_Fi
 | Tabla 2: predicciones y métricas guardadas | **Parcial** | A: DB-2; B: MC-4; cada dueño: LR-6/RF-6/XG-6. | Existen las tablas en el esquema, vacías en una carga ETL nueva. Cierre: persistencia transaccional de runs reales y consultas de verificación. |
 | Gráficos y tablas claros | **Pendiente** | Angel Zambrano: VIZ-1 y CMP-3; B: análisis CMP-4. | Cierre: gráficos de datos y comparación basados en resultados reales, con unidades, títulos y limitaciones. La consigna permite varias herramientas. |
 | Código organizado y control de versiones | **Parcial** | Equipo; Angel Zambrano: T-00/T-15. | Hay ETL modular, tests e identidad/conexión Git verificadas. Faltan CI y evidencias de revisiones; Ruff detectó dos observaciones. |
-| Repo con script de carga, dependencias y README | **Parcial** | Angel Zambrano: T-00; equipo: F-3. | Existen CLI, requirements y README. Cierre: instalación desde copia nueva y comandos documentados que realmente estén implementados y funcionen. |
+| Repo con script de carga, dependencias y README | **Parcial** | Angel Zambrano: T-00; equipo: F-3. | Instalación editable y configuración verificadas desde una copia nueva de GitHub; README con comandos disponibles. Faltan comprobaciones de A/B e integración de la preparación. |
 | Base de datos accesible para revisión | **Pendiente** | Equipo, F-3; responsable de entrega por definir. | Las pruebas usaron bases temporales. Acordar y verificar canal de acceso/entrega al docente, versión, instrucciones y resultados reales. No basta con una BD privada en una computadora. |
 | Presentación de 6 a 8 diapositivas PDF o PPTX | **Pendiente** | Equipo, F-3; consolidación por asignar. | Cierre: archivo definitivo con problema, datos, método, resultados y conclusiones, revisado por los tres. No se encontró una presentación local. |
 | Presentación subida al campus | **Por verificar** | Equipo, F-3; persona encargada por asignar. | Registrar responsable, fecha y confirmación de la entrega. Crear o exportar el archivo no acredita su subida. |
@@ -53,6 +53,19 @@ Referencia: contenido visible de [Proyecto_Final.pdf](../01_consigna/Proyecto_Fi
 | Contratos y criterios acordados | **Parcial** | Equipo, T-01/CMP-1. Hay borrador de datos; faltan contratos y criterios de comparación aprobados. |
 | Informe, model card y revisión cruzada | **Pendiente** | Equipo, F-2/F-3 y tareas de cada modelo. Cierre: una sección por integrante, resultados reales y observaciones atendidas. |
 | Guías de trabajo y seguimiento | **Parcial** | Equipo; Angel Zambrano coordina esta actualización. Los borradores están preparados localmente; falta revisión, commit y merge. |
+
+**T-00: criterios de cierre pendientes y preparación disponible**
+
+| Criterio | Evidencia / siguiente paso |
+|---|---|
+| Repo instalable | Clon nuevo de `2d9ac70`, venv aislado, requirements, paquete editable, `pip check`, semilla `42` y recurso SQL verificados. Falta la comprobación en los equipos de A/B. |
+| Dueños | Identidades confirmadas por el usuario el 31 de octubre: A, Ricky (`rosseab-bit`); B, Brian (usuario pendiente); C, Angel (`Angelzam21`). `CODEOWNERS` incluye las áreas existentes de A/C. Confirmar usuario y acceso de Brian antes de completar las suyas. |
+| Plantilla de PR | `.github/pull_request_template.md` preparada con alcance, evidencia, DoD y checklist; pendiente de revisión e integración en main. |
+| Acceso y protección | Propietario: Ricky (`rosseab-bit`). Invitaciones aceptadas según el usuario el 31 de octubre; falta confirmar usuario y escritura de Brian. La consulta del 30 de octubre devolvió main sin protección y rulesets vacíos. El propietario debe configurar PR, aprobación y merge commits. |
+| Issues y tablero | 50 tareas y dependencias validadas en dry-run con Bash 3.2. No hay issues/PR en la consulta; publicación y Project pendientes de cuentas confirmadas e indicación. Integrar antes la documentación y el generador en main. |
+| Verificaciones | En copia nueva: 29 tests y 3 subcasos aprobados; Ruff mantiene dos observaciones de A/B. T-15 sigue pendiente. |
+
+La [preparación de infraestructura de T-00](evidencia/INFRAESTRUCTURA_T00.md) conserva los archivos, la evidencia de GitHub y las instrucciones concretas para el propietario. T-00 permanece **Parcial** hasta verificar todos sus criterios.
 
 ## 4. Las cuatro partes de la evaluación
 

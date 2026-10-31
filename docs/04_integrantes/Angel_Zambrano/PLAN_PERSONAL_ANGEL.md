@@ -23,8 +23,8 @@ No hay una fecha de entrega oficial confirmada en esta revisión. Este plan prop
 | Situación comprobada o pendiente | Qué bloquea | Quién lo resuelve | Qué podés hacer mientras |
 |---|---|---|---|
 | Entorno local preparado: `.venv` con Python 3.12.16; `python3` del sistema sigue en 3.9.6 | Usar el proyecto desde el entorno activado. | Vos. | Activar `.venv`; versión, dependencias, tests y lint registrados en la [evidencia de T-00](../../05_seguimiento/evidencia/ENTORNO_T00.md). |
-| Hay documentación sin commit en `docs/T-00-guia-angel` | Cambiar de rama sin mezclar o perder trabajo. | Vos revisás y registrás el trabajo. A revisa tu PR. | Lectura, planificación y preparación del entorno. No borrar ni mover cambios a otra tarea a ciegas. |
-| Usuarios, acceso de A/B y permisos de administración no confirmados | Completar invitaciones, dueños y protección de `main`. | A/B confirman sus cuentas; el administrador configura lo que requiera permisos. | Preparar plantilla de PR y mapa de responsables. No mergear `CODEOWNERS` con usuarios inventados. |
+| Preparación de T-00 en `docs/T-00-guia-angel`, pendiente de revisión e integración | Cambiar de tarea conservando el trabajo de esta rama. | Vos registrás y subís el trabajo. Ricky revisa tu PR. | Revisar el diff antes de cambiar de tarea y conservar el historial. |
+| C: Angel (`Angelzam21`); A y propietario: Ricky (`rosseab-bit`); B: Brian, usuario pendiente. Invitaciones aceptadas según el usuario el 31 de octubre | Completar asignaciones, verificar escritura de Brian y proteger `main`. | Brian: usuario y prueba de acceso; Ricky: reglas. | CODEOWNERS incluye A/C; completar B al confirmar su usuario y escritura. |
 | No hay `gh` en PATH | Publicar issues desde el generador; la prueba local sí funciona con Bash 3.2 y Python 3. | Vos, si elegís automatizar. | Validar con `DRY_RUN=1` o crear issues desde GitHub. No bloquea Git ni los commits. |
 | Ruff detectó observaciones en archivos de A y B | Dejar la CI verde si reproduce esas observaciones. | A en transform; B en validate, o quien ellos acuerden. | Preparar el workflow y registrar los fallos; no ocultar la verificación ni cambiar archivos ajenos sin acuerdo. |
 | T-01 y contratos pendientes de aprobación | Cerrar XG-1 y decisiones compartidas de datos/modelado. | Los tres. | Borrador de spec de XGBoost y visualización. |
@@ -47,7 +47,7 @@ La ausencia de un módulo en esta copia no demuestra que nadie lo esté preparan
 
 **Terminaste este paso cuando:** sabés qué cambió, conservaste todo y el trabajo quedó registrado para revisión. Publicar y mergear el PR es un cierre posterior con A, no algo que el agente haga sin tu indicación.
 
-- [ ] Documentación revisada y cambios preservados/registrados.
+- [x] Documentación previa preservada y registrada hasta `2d9ac70`, subida a la rama documental. Revisión e integración en main pendientes.
 
 ### Paso 1. Preparar un entorno Python compatible — T-00
 
@@ -84,6 +84,8 @@ python -m ruff check src tests
 
 - [ ] Responsables, acceso y puntos de entrega confirmados.
 
+Ver la [evidencia de personas y próximos pasos](../../05_seguimiento/evidencia/INFRAESTRUCTURA_T00.md#personas-acceso-y-dependencias). La hipótesis de permisos iguales para el tercer integrante no acredita su acceso.
+
 ### Paso 3. Completar las reglas del repo — T-00
 
 **Qué hacemos:** preparar `CODEOWNERS`, plantilla de PR, instrucciones instalables y seguimiento. Confirmar que A y B pueden instalar sus copias. Configurar PR y aprobación en `main`; el check obligatorio se añade después de ejecutar T-15.
@@ -96,6 +98,8 @@ python -m ruff check src tests
 
 - [ ] Infraestructura de T-00 preparada y acceso del equipo validado.
 
+Preparación local disponible: `CODEOWNERS` parcial y plantilla de PR; instalación desde copia nueva verificada. Las [instrucciones para el propietario](../../05_seguimiento/evidencia/INFRAESTRUCTURA_T00.md#configuración-para-el-propietario) permiten configurar las reglas y registrar la evidencia pendiente.
+
 ### Paso 4. Organizar issues y tablero — T-00
 
 **Qué hacemos:** comprobar si ya hay issues, crear los faltantes y asignar responsables y dependencias. Elegir entre hacerlo desde GitHub o usar `scripts/crear_issues.sh` con sus herramientas compatibles.
@@ -107,6 +111,8 @@ python -m ruff check src tests
 **Terminaste cuando:** podés identificar y tomar cada tarea por su issue, con dueño y dependencias. No es obligatorio instalar `gh` para crear issues manualmente.
 
 - [ ] Issues y tablero utilizables, sin duplicados.
+
+Dry-run verificado: 50 tareas y dependencias válidas, sin publicación. El [procedimiento de issues y tablero](../../05_seguimiento/evidencia/INFRAESTRUCTURA_T00.md#issues-y-tablero) conserva el generador único; primero se confirman las cuentas y se integra la documentación en main.
 
 ### Paso 5. Automatizar las verificaciones — T-15
 

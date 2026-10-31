@@ -1,0 +1,34 @@
+# T-00: asignación parcial con cuentas y acceso de escritura confirmados.
+# A: Ricky (rosseab-bit). B: Brian, usuario de GitHub pendiente (2026-10-31).
+# Mapa completo por rol: docs/02_planificacion/ORDEN_Y_COORDINACION.md, sección 2.
+# Pendientes y evidencia: docs/05_seguimiento/evidencia/INFRAESTRUCTURA_T00.md.
+# Sin regla global: las áreas pendientes no quedan asignadas a otro integrante.
+
+# Gobierno del archivo: propietario del repositorio y responsable de infraestructura.
+/CODEOWNERS @rosseab-bit @Angelzam21
+
+# Angel Zambrano (C): infraestructura, dependencias, carga y orquestación.
+/.github/ @Angelzam21
+/pyproject.toml @Angelzam21
+/requirements.txt @Angelzam21
+/.gitignore @Angelzam21
+/scripts/crear_issues.sh @Angelzam21
+/tests/test_crear_issues.py @Angelzam21
+/scripts/run_etl.py @Angelzam21
+/src/demanda/etl/load.py @Angelzam21
+/src/demanda/etl/pipeline.py @Angelzam21
+/docs/00_inicio/README.md @Angelzam21
+/docs/04_integrantes/Angel_Zambrano/ @Angelzam21
+
+# A, Ricky (rosseab-bit): datos, extracción, transformación y base de datos.
+/src/demanda/etl/extract.py @rosseab-bit
+/src/demanda/etl/transform.py @rosseab-bit
+/src/demanda/db/ @rosseab-bit
+/docs/06_datos/data_dictionary.md @rosseab-bit
+/docs/04_integrantes/A/ @rosseab-bit
+
+# Agregar logreg.py y sus tests/specs propios al incorporar esas entregas.
+# B, Brian (usuario pendiente): validate.py, módulos comunes, rf.py, run_all.py y sus tests/specs.
+# Compartidos pendientes: config/, specs comunes y tests/test_etl.py.
+# Agregar viz/, xgb.py, fixtures y sus tests al incorporar esas entregas.
+# Revisión cruzada: A revisa a C; C revisa a B; B revisa a A.

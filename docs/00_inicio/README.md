@@ -12,12 +12,23 @@ Clasifica cada mes en **Normal / Alta / Crítica** según demanda total y sector
 
 ## Instalación
 
+Para obtener tu primera copia:
+
+```bash
+git clone https://github.com/rosseab-bit/analisis_energia.git
+cd analisis_energia
+```
+
+Si ya tenés el repositorio, usá esa copia y preservá sus cambios. La rama `main`
+contiene las entregas integradas; las preparaciones en otras ramas requieren su PR.
+
 Requiere Python 3.11 o posterior. Seleccioná un intérprete compatible y verificá su versión antes de crear `.venv`; no se presupone que el `python` del sistema ya cumpla esa condición.
 
 ```bash
 python --version
 python -m venv .venv && source .venv/bin/activate     # Windows: .venv\Scripts\activate
-pip install -r requirements.txt && pip install -e .
+python -m pip install -r requirements.txt
+python -m pip install -e .
 ```
 
 Para volver a usar un entorno ya creado, ejecutá `source .venv/bin/activate`
