@@ -1,168 +1,191 @@
 #!/usr/bin/env bash
-# Crea labels, milestones e issues del proyecto en GitHub con la CLI `gh` (v0.3 del plan).
-# Requisitos: gh instalado y autenticado (gh auth login); ejecutar dentro del repo clonado.
-#
-# Uso:
-#   export GH_USER_A="usuario-github-de-A" GH_USER_B="usuario-github-de-B" GH_USER_C="usuario-github-de-C"
-#   bash scripts/crear_issues.sh
-#
-# Prueba sin tocar GitHub (valida el parseo y que cada dependencia exista):
-#   DRY_RUN=1 bash scripts/crear_issues.sh
-#
-# Cada issue indica "Depende de" por ID. Al final, una segunda pasada reemplaza los IDs por #N reales.
-# Correr UNA sola vez: ejecutarlo de nuevo duplica los issues.
-
+# Crea issues a partir de PLAN_SDD.md. No mantiene un segundo catálogo de tareas.
+# Compatible con Bash 3.2 y Python 3 (solo biblioteca estándar).
+# Prueba local: DRY_RUN=1 bash scripts/crear_issues.sh
+# Publicación: definir GH_USER_A/B/C y autenticar gh; el repo debe estar sin issues.
 set -euo pipefail
+SCRIPT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+python3 - "$SCRIPT_ROOT" "$@" <<'PY'
+import argparse
+import json
+import os
+import re
+import shutil
+import subprocess
+import sys
+from pathlib import Path
 
-DRY_RUN="${DRY_RUN:-0}"
-if [ "$DRY_RUN" = "1" ]; then
-  GH_USER_A="${GH_USER_A:-usuario-A}"; GH_USER_B="${GH_USER_B:-usuario-B}"; GH_USER_C="${GH_USER_C:-usuario-C}"
-  REPO="(dry-run)"
-else
-  : "${GH_USER_A:?Definir GH_USER_A}"; : "${GH_USER_B:?Definir GH_USER_B}"; : "${GH_USER_C:?Definir GH_USER_C}"
-  REPO=$(gh repo view --json nameWithOwner -q .nameWithOwner)
-fi
-echo "Repositorio: $REPO"
-
-# ---------- Labels ----------
-label() { [ "$DRY_RUN" = "1" ] || gh label create "$1" --color "$2" --description "$3" --force >/dev/null; }
-label "persona-A" "1f77b4" "Responsable: A"
-label "persona-B" "2ca02c" "Responsable: B"
-label "persona-C" "ff7f0e" "Responsable: C"
-label "equipo"    "7f7f7f" "Tarea conjunta (los 3)"
-label "etl"       "d62728" "Proceso ETL"
-label "base-compartida" "bcbd22" "Componentes comunes a los 3 modelos"
-label "infra"     "8c8c8c" "Repositorio, CI, configuración"
-label "viz"       "17becf" "Visualización y dashboard"
-label "modelo-logreg" "9467bd" "Logistic Regression (A)"
-label "modelo-rf"     "8c564b" "Random Forest (B)"
-label "modelo-xgb"    "e377c2" "XGBoost (C)"
-label "comparacion"   "2ca02c" "Comparación de métricas"
-
-# ---------- Milestones ----------
-ms() { [ "$DRY_RUN" = "1" ] || gh api "repos/$REPO/milestones" -f title="$1" -f description="$2" >/dev/null 2>&1 || true; }
-ms "Fase 0 - Fundacion"       "Repo, specs, contratos, schema y configuración"
-ms "Fase 1 - ETL y base"      "ETL, repository, preprocesador, split, evaluate, runner, CI, plots base"
-ms "Fase 2 - Modelos"         "LR (A), RF (B), XGB (C) en paralelo"
-ms "Fase 3 - Comparacion"     "Comparación de métricas y decisión del modelo"
-ms "Fase 4 - Cierre"          "Dashboard, integración, informe y demo"
-
-user_for() { case "$1" in A) echo "$GH_USER_A";; B) echo "$GH_USER_B";; C) echo "$GH_USER_C";; *) echo "";; esac; }
-ficha_for() { case "$1" in A) echo "TAREAS_A.md";; B) echo "TAREAS_B.md";; C) echo "TAREAS_C.md";; *) echo "PLAN_SDD.md";; esac; }
-
-# Formato: ID|Título|Responsables (A, B, C o combinación con +)|Milestone|Labels extra (coma, "-" si no hay)|Depende de|Entregable
-TASKS=$(cat <<'EOF'
-T-00|Repo y esqueleto: pyproject, config, CLAUDE.md, CODEOWNERS, plantilla de PR, proteccion de main|C|Fase 0 - Fundacion|infra|-|Repo clonable; pip install -e . funciona
-T-01|Reunion de arranque: cerrar decisiones D1-D7 y aprobar specs 00-contratos y 01-datos|A+B+C|Fase 0 - Fundacion|equipo|T-00|Specs aprobadas por PR
-T-02|Diccionario de datos y unidades|A|Fase 0 - Fundacion|etl|T-00|docs/data_dictionary.md
-T-03|schema.sql (Tabla 1, 2, 3 y extras del ETL)|A|Fase 0 - Fundacion|etl|T-01|DDL idempotente + test
-CMP-1|Spec de comparacion de modelos (criterios definidos antes de ver resultados)|A+B+C|Fase 0 - Fundacion|comparacion,equipo|T-01|specs/03-comparacion.md
-ETL-1|ETL Extract: lectura del CSV, fechas, SHA-256|A|Fase 1 - ETL y base|etl|T-02|etl/extract.py + tests
-ETL-2|ETL Validate: reglas de calidad (errores vs advertencias)|B|Fase 1 - ETL y base|etl|T-01|etl/validate.py + tests
-ETL-3|ETL Transform: calendario, participaciones, etiqueta, split cronologico|A|Fase 1 - ETL y base|etl|T-01|etl/transform.py + tests (incl. sin fuga)
-ETL-4|ETL Load: transaccion, idempotencia, rollback, auditoria|C|Fase 1 - ETL y base|etl|T-03|etl/load.py + tests
-ETL-5|ETL Pipeline y CLI run_etl.py + test de integracion con el CSV real|C|Fase 1 - ETL y base|etl|ETL-1,ETL-2,ETL-3,ETL-4|demanda.db reproducible
-ETL-6|EDA de decision: metodos de etiqueta (D1), fuga por sectores (D2), balance de clases|B|Fase 1 - ETL y base|etl|ETL-5|notebooks/01_eda.ipynb + recomendacion
-DB-1|repository.load_clean_data()|A|Fase 1 - ETL y base|base-compartida|ETL-5|Funcion + tests
-DB-2|repository.save_run() en Tablas 2 y 3 (transaccional)|A|Fase 1 - ETL y base|base-compartida|T-03|Funcion + tests + contrato
-MC-1|build_preprocessor() desde feature_sets (test anti-fuga)|B|Fase 1 - ETL y base|base-compartida|T-01,ETL-5|models/preprocessing.py + tests
-MC-2|splits.py: split por columna + TimeSeriesSplit + chequeo de clases por fold|B|Fase 1 - ETL y base|base-compartida|ETL-5|models/splits.py + tests
-MC-3|evaluate.py: Accuracy, Precision, Recall, F1 y matriz de confusion|B|Fase 1 - ETL y base|base-compartida|T-01|models/evaluate.py + tests
-MC-4|Runner train.py (--model, --features, autodescubrimiento)|B|Fase 1 - ETL y base|base-compartida|MC-1,MC-2,MC-3,DB-1,DB-2|python -m demanda.models.train
-T-15|CI en GitHub Actions (ruff + pytest) como check obligatorio|C|Fase 1 - ETL y base|infra|T-00|.github/workflows/ci.yml
-VIZ-1|plots.py base: clases, demanda vs temperatura, estacionalidad, serie con criticos|C|Fase 1 - ETL y base|viz|ETL-5|viz/plots.py + tests de humo
-VIZ-2|BD fixture con datos ficticios (3 tablas) para tests y dashboard|C|Fase 1 - ETL y base|viz|T-03|tests/fixtures.py
-EOF
-)
-
-# Tareas de modelo: mismas 7 por integrante.  args: prefijo, persona, label, nombre, busqueda
-model_tasks() {
-  local P="$1" PERSON="$2" LABEL="$3" NAME="$4" SEARCH="$5"
-  cat <<EOF
-${P}-1|[${NAME}] Spec del modelo: justificacion, espacio de busqueda, desbalance|${PERSON}|Fase 2 - Modelos|${LABEL}|T-01|specs/02-modelo-${NAME}.md
-${P}-2|[${NAME}] Modulo del modelo (contrato NAME/SEARCH/get_estimator/get_param_grid) + test|${PERSON}|Fase 2 - Modelos|${LABEL}|${P}-1,T-03|models/${NAME}.py + tests
-${P}-3|[${NAME}] Baseline sin tuning con el pipeline comun (set base)|${PERSON}|Fase 2 - Modelos|${LABEL}|${P}-2,MC-1,MC-2|Baseline reproducible
-${P}-4|[${NAME}] Busqueda de hiperparametros (${SEARCH}) con CV temporal y scoring f1_macro|${PERSON}|Fase 2 - Modelos|${LABEL}|${P}-3|Mejores parametros y cv_best_score
-${P}-5|[${NAME}] Evaluacion en test y ablacion de features (base, con_participaciones, sin_potencia)|${PERSON}|Fase 2 - Modelos|${LABEL}|${P}-4,MC-3|Metricas y matrices por set
-${P}-6|[${NAME}] Persistencia en Tablas 2 y 3 con run_id propio|${PERSON}|Fase 2 - Modelos|${LABEL}|${P}-5,MC-4,DB-2|Filas en demanda.db
-${P}-7|[${NAME}] Notebook e informe del modelo: interpretacion y analisis de errores|${PERSON}|Fase 2 - Modelos|${LABEL}|${P}-6|notebook + seccion en docs/model_card.md
-EOF
+ROOT = Path(sys.argv[1])
+PLAN = Path('docs/02_planificacion/PLAN_SDD.md')
+FICHAS = {
+    'A': 'docs/04_integrantes/A/TAREAS_A.md',
+    'B': 'docs/04_integrantes/B/TAREAS_B.md',
+    'C': 'docs/04_integrantes/Angel_Zambrano/TAREAS_C.md',
+}
+NAMES = {'A': 'A', 'B': 'B', 'C': 'Angel Zambrano'}
+MODELS = [('LR', 'A', 'logreg', '02'), ('RF', 'B', 'rf', '03'), ('XG', 'C', 'xgb', '04')]
+LABELS = {
+    'persona-A': ('1f77b4', 'Responsable: A'),
+    'persona-B': ('2ca02c', 'Responsable: B'),
+    'persona-C': ('ff7f0e', 'Responsable: Angel Zambrano'),
+    'equipo': ('7f7f7f', 'Tarea conjunta'),
+    'etl': ('d62728', 'Proceso ETL'),
+    'base-compartida': ('bcbd22', 'Componentes comunes y persistencia'),
+    'infra': ('8c8c8c', 'Repositorio y CI'),
+    'viz': ('17becf', 'Visualización y dashboard'),
+    'comparacion': ('2ca02c', 'Comparación de modelos'),
+    'modelo-logreg': ('9467bd', 'Logistic Regression'),
+    'modelo-rf': ('8c564b', 'Random Forest'),
+    'modelo-xgb': ('e377c2', 'XGBoost: Angel Zambrano'),
 }
 
-TASKS+=$'\n'"$(model_tasks LR A modelo-logreg logreg GridSearchCV)"
-TASKS+=$'\n'"$(model_tasks RF B modelo-rf rf RandomizedSearchCV)"
-TASKS+=$'\n'"$(model_tasks XG C modelo-xgb xgb RandomizedSearchCV)"
 
-TASKS+=$'\n'"$(cat <<'EOF'
-CMP-2|compare_runs(): consulta consolidada de los 3 run_id (mismo split y semilla)|A|Fase 3 - Comparacion|comparacion|LR-6,RF-6,XG-6,CMP-1|repository.compare_runs() + tests
-CMP-3|Graficos de comparacion: metricas, matrices lado a lado, F1 por clase, tiempos, ablacion|C|Fase 3 - Comparacion|comparacion,viz|CMP-2,VIZ-1|viz/plots.py ampliado
-CMP-4|Analisis comparativo: ganador, incertidumbre, deriva estacional|B|Fase 3 - Comparacion|comparacion|CMP-3|notebooks/05_comparacion.ipynb
-CMP-5|Decision del modelo final segun el criterio de CMP-1|A+B+C|Fase 3 - Comparacion|comparacion,equipo|CMP-4|Seccion en docs/model_card.md
-V-1|Dashboard Streamlit: modelos, comparacion, predicciones y calidad de datos|C|Fase 4 - Cierre|viz|CMP-3|viz/app.py sobre demanda.db
-F-1|run_all.py + test de integracion (ETL -> 3 modelos -> BD)|B|Fase 4 - Cierre|base-compartida|CMP-2|Un comando de punta a punta
-F-2|Revision cruzada final de codigo y specs (A->B, B->C, C->A)|A+B+C|Fase 4 - Cierre|equipo|V-1,F-1|PRs de revision cerrados
-F-3|Informe final y README (una seccion por integrante)|A+B+C|Fase 4 - Cierre|equipo|CMP-5,V-1|docs/informe_final.md
-F-4|Ensayo de demo desde cero|A+B+C|Fase 4 - Cierre|equipo|F-3|Demo reproducible
-EOF
-)"
+def clean(value):
+    return value.replace('**', '').replace('`', '').strip()
 
-# ---------- Primera pasada: crear issues ----------
-declare -A NUM
-COUNTER=0
-while IFS='|' read -r ID TITLE WHO MS LABELS DEPS DELIV; do
-  [ -z "$ID" ] && continue
-  LBL=""; ASSIGNEES=()
-  IFS='+' read -ra PEOPLE <<< "$WHO"
-  for p in "${PEOPLE[@]}"; do
-    LBL+="persona-$p,"
-    ASSIGNEES+=(--assignee "$(user_for "$p")")
-  done
-  [ "$LABELS" != "-" ] && LBL+="$LABELS,"
-  LBL="${LBL%,}"
-  FICHA="$(ficha_for "${PEOPLE[0]}")"; [ "${#PEOPLE[@]}" -gt 1 ] && FICHA="PLAN_SDD.md y las fichas TAREAS_A/B/C.md"
-  BODY="**ID:** $ID
-**Responsable(s):** $WHO
-**Depende de:** $DEPS
-**Entregable:** $DELIV
 
-**Ficha con el prompt para el agente de IA:** \`$FICHA\` (buscá \`$ID\`)
+def read_tasks():
+    tasks, phase = {}, None
+    for line in (ROOT / PLAN).read_text(encoding='utf-8').splitlines():
+        heading = re.match(r'^### (Fase \d+)\s*[—-]\s*(.+)', line)
+        if heading:
+            title = re.sub(r'\s*\([^)]*\)', '', heading[2]).strip()
+            phase = heading[1] + ' - ' + title
+        if not phase or not line.startswith('|'):
+            continue
+        cells = [clean(c) for c in line.strip().strip('|').split('|')]
+        if not re.fullmatch(r'(?:T|ETL|DB|MC|VIZ|CMP|V|F|X)-\d+', cells[0]):
+            continue
+        if cells[0].startswith('X-'):
+            if len(cells) != 4:
+                raise ValueError('Fila de modelo inválida: ' + line)
+            models = MODELS
+        else:
+            if len(cells) != 5:
+                raise ValueError('Fila de tarea inválida: ' + line)
+            models = [(None, None, None, None)]
+        for prefix, person, model, notebook in models:
+            if prefix:
+                task_id = cells[0].replace('X-', prefix + '-')
+                title = '[' + model + '] ' + cells[1]
+                owners, deps, deliverable = [person], cells[2], cells[3]
+                deps = re.sub(r'\bX-', prefix + '-', deps)
+                deliverable = deliverable.replace('<x>', model).replace('0N_', notebook + '_')
+            else:
+                task_id, title, owner_text, deps, deliverable = cells
+                owners = owner_text.replace('Angel Zambrano', 'C').split('+')
+            if task_id in tasks:
+                raise ValueError('ID duplicado en el plan: ' + task_id)
+            if any(owner not in NAMES for owner in owners):
+                raise ValueError('Responsable desconocido: ' + ', '.join(owners))
+            dependencies = re.findall(r'\b(?:T|ETL|DB|MC|VIZ|CMP|V|F|LR|RF|XG)-\d+\b', deps)
+            tasks[task_id] = {'title': title, 'owners': owners, 'deps': dependencies,
+                              'deliverable': deliverable, 'phase': phase}
+    if not tasks:
+        raise ValueError('No se encontraron tareas en el plan')
+    visited, active = set(), set()
+    def visit(task_id):
+        if task_id not in tasks:
+            raise ValueError('Dependencia inexistente: ' + task_id)
+        if task_id in active:
+            raise ValueError('Dependencias circulares: ' + task_id)
+        if task_id in visited:
+            return
+        active.add(task_id)
+        for dependency in tasks[task_id]['deps']:
+            visit(dependency)
+        active.remove(task_id)
+        visited.add(task_id)
+    for task_id in tasks:
+        visit(task_id)
+    return tasks
 
-### Definición de hecho
-- [ ] Spec/criterio escrito antes de implementar
-- [ ] Mínimo 3 commits propios (Conventional Commits con \`($ID)\`)
-- [ ] Tests y linter pasan en local y en CI
-- [ ] El autor puede explicar el código (aunque lo haya generado el agente)
-- [ ] Documentación actualizada
-- [ ] PR aprobado por otro integrante (\`Closes #N\`)
-- [ ] Merge sin squash
 
-Rama sugerida: \`feat/$ID-<descripcion-corta>\`"
-  if [ "$DRY_RUN" = "1" ]; then
-    COUNTER=$((COUNTER+1)); NUM[$ID]="$COUNTER"
-    echo "[dry-run] #$COUNTER $ID ($WHO) labels=[$LBL] milestone=[$MS]"
-  else
-    URL=$(gh issue create --title "[$ID] $TITLE" --body "$BODY" --label "$LBL" --milestone "$MS" "${ASSIGNEES[@]}")
-    NUM[$ID]="${URL##*/}"
-    echo "$ID -> #${NUM[$ID]}"
-  fi
-done <<< "$TASKS"
+def labels_for(task_id, task):
+    labels = ['persona-' + person for person in task['owners']]
+    prefix = task_id.split('-')[0]
+    topic = {'ETL': 'etl', 'DB': 'base-compartida', 'MC': 'base-compartida',
+             'VIZ': 'viz', 'V': 'viz', 'CMP': 'comparacion',
+             'LR': 'modelo-logreg', 'RF': 'modelo-rf', 'XG': 'modelo-xgb'}.get(prefix)
+    if topic:
+        labels.append(topic)
+    if task_id in ('T-00', 'T-15'):
+        labels.append('infra')
+    if task_id == 'F-1':
+        labels.append('base-compartida')
+    if task_id == 'CMP-3':
+        labels.append('viz')
+    if len(task['owners']) > 1:
+        labels.append('equipo')
+    return labels
 
-# ---------- Segunda pasada: reemplazar IDs de dependencias por #N ----------
-# Con `set -u`, una dependencia que no exista como tarea aborta el script (sirve de validación).
-while IFS='|' read -r ID TITLE WHO MS LABELS DEPS DELIV; do
-  [ -z "$ID" ] && continue
-  [ "$DEPS" = "-" ] && continue
-  REFS=""
-  IFS=',' read -ra DL <<< "$DEPS"
-  for d in "${DL[@]}"; do REFS+="#${NUM[$d]} ($d), "; done
-  REFS="${REFS%, }"
-  if [ "$DRY_RUN" = "1" ]; then
-    echo "[dry-run] $ID depende de: $REFS"
-  else
-    CURRENT=$(gh issue view "${NUM[$ID]}" --json body -q .body)
-    NEW="${CURRENT//\*\*Depende de:\*\* $DEPS/**Depende de:** $REFS}"
-    gh issue edit "${NUM[$ID]}" --body "$NEW" >/dev/null
-  fi
-done <<< "$TASKS"
 
-echo "Listo: ${#NUM[@]} issues."
+def gh(*args):
+    result = subprocess.run(['gh', *args], check=False, cwd=ROOT, capture_output=True, text=True)
+    if result.returncode:
+        raise RuntimeError(result.stderr.strip() or 'Falló gh: ' + args[0])
+    return result.stdout.strip()
+
+
+def main():
+    parser = argparse.ArgumentParser(description='Generar issues desde PLAN_SDD.md')
+    parser.add_argument('--dry-run', action='store_true', help='validar y mostrar sin acceder a GitHub')
+    args = parser.parse_args(sys.argv[2:])
+    dry_env = os.environ.get('DRY_RUN', '0')
+    if dry_env not in ('0', '1'):
+        raise ValueError('DRY_RUN debe ser 0 o 1')
+    tasks = read_tasks()
+    for path in FICHAS.values():
+        if not (ROOT / path).is_file():
+            raise ValueError('Falta la ficha: ' + path)
+    if args.dry_run or dry_env == '1':
+        for task_id, task in tasks.items():
+            owners = ', '.join(NAMES[p] for p in task['owners'])
+            print('[dry-run] ' + task_id + ' | ' + owners + ' | ' + task['title'])
+            print('  Depende de: ' + (', '.join(task['deps']) or 'nada'))
+            print('  Entregable: ' + task['deliverable'])
+        print('Modo de prueba: ' + str(len(tasks)) + ' tareas. Sin cambios en GitHub.')
+        return
+    users = {person: os.environ.get('GH_USER_' + person, '').strip() for person in NAMES}
+    if not all(users.values()):
+        raise ValueError('Definir GH_USER_A, GH_USER_B y GH_USER_C con usuarios reales de GitHub')
+    if not shutil.which('gh'):
+        raise ValueError('Falta gh; instalarlo y autenticarlo para publicar, o usar --dry-run')
+    repo = json.loads(gh('repo', 'view', '--json', 'nameWithOwner,url'))
+    if json.loads(gh('issue', 'list', '--state', 'all', '--limit', '1', '--json', 'number')):
+        raise ValueError('El repo ya tiene issues. Revisar y completar los faltantes manualmente para no duplicarlos')
+    for name, (color, description) in LABELS.items():
+        gh('label', 'create', name, '--color', color, '--description', description, '--force')
+    existing = set(gh('api', 'repos/' + repo['nameWithOwner'] + '/milestones',
+                      '--paginate', '--jq', '.[].title').splitlines())
+    for phase in dict.fromkeys(task['phase'] for task in tasks.values()):
+        if phase not in existing:
+            gh('api', 'repos/' + repo['nameWithOwner'] + '/milestones', '-f', 'title=' + phase)
+    numbers = {}
+    for task_id, task in tasks.items():
+        owners = ', '.join(NAMES[p] for p in task['owners'])
+        ficha = FICHAS[task['owners'][0]] if len(task['owners']) == 1 else str(PLAN)
+        body = ('**ID:** ' + task_id + '\n**Responsable(s):** ' + owners +
+                '\n**Entregable:** ' + task['deliverable'] +
+                '\n\n[Plan y criterios de cierre](' + repo['url'] + '/blob/main/' + str(PLAN) +
+                ')\n[Instrucciones de la tarea](' + repo['url'] + '/blob/main/' + ficha + ')')
+        command = ['issue', 'create', '--title', '[' + task_id + '] ' + task['title'],
+                   '--body', body, '--label', ','.join(labels_for(task_id, task)), '--milestone', task['phase']]
+        for person in task['owners']:
+            command.extend(['--assignee', users[person]])
+        url = gh(*command)
+        numbers[task_id] = url.rsplit('/', 1)[-1]
+        task['body'] = body
+        print(task_id + ' -> #' + numbers[task_id])
+    for task_id, task in tasks.items():
+        refs = ', '.join('#' + numbers[d] + ' (' + d + ')' for d in task['deps']) or 'nada'
+        gh('issue', 'edit', numbers[task_id], '--body', task['body'] + '\n\n**Depende de:** ' + refs)
+    print('Listo: ' + str(len(numbers)) + ' issues. Registrar la ejecución; no repetir el generador.')
+
+
+try:
+    main()
+except (ValueError, RuntimeError, OSError) as exc:
+    print('Error: ' + str(exc), file=sys.stderr)
+    sys.exit(1)
+PY
