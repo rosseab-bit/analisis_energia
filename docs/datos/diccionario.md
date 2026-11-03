@@ -2,7 +2,7 @@
 
 Fuente: `data/raw/demanda_electricidad_original_mensual1.csv` · 308 filas × 30 columnas · serie **mensual** 2001-01 a 2026-08 (sin meses faltantes). SHA-256 del archivo: `b2964bd292dbde9b7b688268b04ae2f0bb783ebf0d48a87ee1d85f7b2eaf2241`.
 
-Las cifras de este documento se verificaron contra el CSV; comando, salida y comparación en `docs/05_seguimiento/evidencia/VERIFICACION_DATOS_T02.md`. Las **unidades** de demanda y potencia **no figuran en el archivo** y están PENDIENTES (ver [Unidades](#unidades-pendiente-d7)).
+Las cifras de este documento se verificaron contra el CSV; comando, salida y comparación en la [verificación del dataset](../validacion/datos.md). Las **unidades** de demanda y potencia **no figuran en el archivo** y están PENDIENTES (ver [Unidades](#unidades-pendiente-d7)).
 
 ## Columnas del CSV crudo (30)
 
@@ -59,11 +59,11 @@ Disponibles desde 2014-01 hasta 2026-06 (150 meses; los 158 nulos son 2001-01 �
 
 ## Hallazgos de calidad (verificados sobre el CSV)
 
-1. **Sectores:** en las 260 filas donde existen, `residencial + comercio_e_industria + grandes_usuarios = demanda_total` de forma exacta (diferencia máxima 1,8e-12, ruido de coma flotante). Consecuencia: si la etiqueta se deriva de `demanda_total`, los sectores en valores absolutos **la reconstruyen** (fuga de datos). Usar participaciones (`part_*`) o excluirlos; se compara en el experimento de ablación (ver `docs/07_especificaciones/03-comparacion.md`, aún por redactar en CMP-1).
+1. **Sectores:** en las 260 filas donde existen, `residencial + comercio_e_industria + grandes_usuarios = demanda_total` de forma exacta (diferencia máxima 1,8e-12, ruido de coma flotante). Consecuencia: si la etiqueta se deriva de `demanda_total`, los sectores en valores absolutos **la reconstruyen** (fuga de datos). Usar participaciones (`part_*`) o excluirlos; su comparación mediante ablación está pendiente.
 2. **Distribuidoras:** cubren en promedio ~71 % de `demanda_total` (66 %–76 %) en los 150 meses con datos; **no** suman el total. No se usan como features en la v1; se guardan en formato largo en `demanda_distribuidora`.
 3. **`potencia_maxima`** tiene correlación ≈ 0,96 con `demanda_total` (y `temperatura_promedio` ≈ 0,04 con la demanda total, pues el efecto es no lineal: sube en verano y en invierno). Es una variable concurrente muy informativa; se mantiene como feature pero se evalúa su peso en la ablación.
 4. **Tendencia:** la demanda anual media crece de ~6.500 (2001: 6.508) a ~11.800 (2025: 11.771); el valor de 2026 (12.217) cubre solo enero-agosto. Eso afecta a una etiqueta basada en percentiles globales. El código de referencia utiliza `relativo_tendencia`, pero su media centrada tiene un defecto temporal abierto. La decisión metodológica se mantiene en D1 de la spec, no se da por aprobada en este diccionario.
-5. **Estacionalidad:** las medias por mes más altas son julio, enero y diciembre; las más bajas, abril, septiembre y octubre. La amplitud del pico estacional **crece** con los años: el máximo anual del cociente demanda / media móvil centrada de 12 meses pasa de 1,05 en 2001 a entre 1,13 y 1,19 en 2023-2025. Qué efecto tiene esto sobre la cantidad de meses `Crítica` en test depende de la etiqueta definitiva (D1) y se medirá en ETL-3; no se afirma aquí.
+5. **Estacionalidad:** las medias por mes más altas son julio, enero y diciembre; las más bajas, abril, septiembre y octubre. La amplitud del pico estacional **crece** con los años: el máximo anual del cociente demanda / media móvil centrada de 12 meses pasa de 1,05 en 2001 a entre 1,13 y 1,19 en 2023-2025. Qué efecto tiene esto sobre la cantidad de meses `Crítica` en test depende de la etiqueta definitiva (D1) y deberá medirse cuando se defina esa etiqueta.
 6. Sin valores negativos ni outliers (|z| > 3) en `demanda_total` (|z| máximo 2,24).
 
 ## Unidades (PENDIENTE, D7)
@@ -76,7 +76,7 @@ El CSV no incluye metadatos de unidades y no hay otra fuente en el repositorio q
 | `potencia_maxima` | PENDIENTE (candidato a verificar: MW) | Confirmar con la fuente del dataset |
 | `temperatura_promedio` | °C (supuesto: el rango 9,3 – 27,1 es plausible y `config.yaml` ya la trata como °C) | Confirmar con la fuente |
 
-Cuando se confirmen, se completa esta tabla y la columna «Unidad» de arriba, se registra la fuente y la fecha de consulta, y se actualiza D7 en `docs/07_especificaciones/01-datos.md`. Hasta entonces, los gráficos y el informe deben rotular los ejes como «unidad pendiente» o evitar afirmar la unidad. La procedencia exacta del dataset también está pendiente (ver `docs/05_seguimiento/avance.md`).
+Cuando se confirmen, se completa esta tabla y la columna «Unidad» de arriba, se registra la fuente y la fecha de consulta, y se actualiza D7 en la [especificación de datos](../especificaciones/datos-etl.md). Hasta entonces, los gráficos y el informe deben rotular los ejes como «unidad pendiente» o evitar afirmar la unidad. La procedencia exacta del dataset también está pendiente.
 
 ## Tabla `datos_limpios` (Tabla 1 — salida del ETL)
 

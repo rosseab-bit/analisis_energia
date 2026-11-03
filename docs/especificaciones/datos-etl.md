@@ -1,6 +1,6 @@
-# Spec 01 — Datos y ETL
+# Especificación de datos y ETL
 
-Estado: **borrador v0.1** (se aprueba en la tarea T-01). Cualquier cambio se hace primero acá.
+Estado: **borrador v0.1**. Las decisiones metodológicas pendientes se detallan en la sección 4.
 
 ## 1. Objetivo
 Cargar `demanda_electricidad_original_mensual1.csv` en SQLite de forma **reproducible, validada y auditable**, dejando la Tabla 1 lista para que los tres modelos la consuman sin tocarla.
@@ -21,14 +21,14 @@ Se ejecuta con `python scripts/run_etl.py [--reset]`. Orquestación en `etl/pipe
 | ETL-1 | El CSV se lee sin modificar valores; las fechas se parsean a datetime | `test_fechas_extraidas` |
 | ETL-2 | La corrida **falla** (código de salida 1, sin escribir nada) si: faltan columnas obligatorias, hay fechas duplicadas o meses faltantes, valores negativos, temperatura fuera de rango, nulos en columnas base, sectores parcialmente nulos o que no suman `demanda_total` | `TestValidate` |
 | ETL-3 | Los nulos esperados (sectores antes de 2005; distribuidoras antes de 2014 y tras 2026-06) generan **advertencia**, no error, y **no se imputan** en el ETL | `test_nulos_esperados_*`, `test_participaciones_*` |
-| ETL-4 | Tabla 1 con una fila por mes, clave `fecha`, columnas según `docs/06_datos/data_dictionary.md` | `test_conteos` |
+| ETL-4 | Tabla 1 con una fila por mes, clave `fecha`, columnas según el [diccionario de datos](../datos/diccionario.md) | `test_conteos` |
 | ETL-5 | Los cálculos que definen los scores, umbrales y etiquetas de train no dependen de test; debe probarse el método configurado, incluidos sus pasos intermedios | Ampliar la prueba de independencia temporal; la actual solo verifica `percentil_global` |
 | ETL-6 | Split cronológico (nunca aleatorio) con fracción de `config.yaml` | `test_split_cronologico` |
 | ETL-7 | La carga es **atómica** (transacción) e **idempotente** (correr dos veces no duplica) | `test_rollback_*`, `test_carga_idempotente_*` |
 | ETL-8 | Cada corrida deja una fila en `etl_auditoria` con SHA-256 del archivo, conteos, nulos, umbrales y configuración | `test_carga_idempotente_*` |
 | ETL-9 | Las distribuidoras se guardan en formato largo, solo con datos no nulos | `test_distribuidoras_formato_largo_*` |
 
-## 4. Decisiones abiertas (cerrar en T-01 con los 3)
+## 4. Decisiones metodológicas abiertas
 
 | ID | Decisión | Propuesta por defecto | Alternativas / riesgo |
 |---|---|---|---|
@@ -43,11 +43,11 @@ Se ejecuta con `python scripts/run_etl.py [--reset]`. Orquestación en `etl/pipe
 ## 5. Contrato con los modelos (lectura de Tabla 1)
 
 ```python
-# demanda/db/repository.py  (tarea DB-1)
+# demanda/db/repository.py (interfaz propuesta, pendiente de implementación)
 def load_clean_data(db_path=None, desde_sectores: bool = False) -> pd.DataFrame:
     """Devuelve datos_limpios ordenado por fecha. Si desde_sectores=True, solo filas con tiene_sectores=1."""
 ```
 
 Los modelos **no** recalculan la etiqueta ni el split: leen `etiqueta` y `split` de la tabla.
 
-Los hechos observados y unidades se mantienen en el diccionario; los estados de corrección, en avance general. Esta spec sigue siendo un borrador: centralizar D1-D7 no equivale a aprobar sus decisiones.
+Los hechos observados y unidades se mantienen en el [diccionario](../datos/diccionario.md); el diagnóstico temporal se conserva en la [validación del ETL](../validacion/etl.md). Esta especificación sigue siendo un borrador: D1-D7 continúan abiertas.

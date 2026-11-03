@@ -1,24 +1,24 @@
-# Verificación del diccionario de datos (T-02)
+# Verificación del dataset
 
-Verifica cada afirmación numérica de `docs/06_datos/data_dictionary.md` contra el CSV crudo. Solo lectura: no modifica datos, código ni configuración.
+Verificación del [diccionario de datos](../datos/diccionario.md) contra el CSV crudo. No modifica datos, código ni configuración.
 
 - Archivo: `data/raw/demanda_electricidad_original_mensual1.csv`
 - SHA-256: `b2964bd292dbde9b7b688268b04ae2f0bb783ebf0d48a87ee1d85f7b2eaf2241` (`sha256sum data/raw/demanda_electricidad_original_mensual1.csv`)
-- Entorno: Python 3 con pandas 3.1.0 en un venv temporal fuera del repo (el repo aún no tiene entorno instalado en esta máquina).
+- Entorno de la ejecución original: Python 3 con pandas 3.1.0.
 - Fecha de ejecución: 2026-10-31.
 
 ## Cómo reproducir
 
-Guardá el script de abajo como `verif_t02.py` fuera del repo (por ejemplo en `/tmp`) y ejecutá desde la raíz del repo:
+El script puede guardarse como `verificar_datos.py` fuera del repositorio y ejecutarse desde la raíz con su ruta absoluta:
 
 ```bash
-python -I /tmp/verif_t02.py data/raw/demanda_electricidad_original_mensual1.csv
+python -I <ruta-al-script>/verificar_datos.py data/raw/demanda_electricidad_original_mensual1.csv
 ```
 
 ## Script
 
 ```python
-"""Verificaciones T-02: cada afirmación numérica del diccionario contra el CSV crudo."""
+"""Verificaciones del diccionario de datos contra el CSV crudo."""
 import sys
 import pandas as pd
 
