@@ -25,6 +25,14 @@ El ETL lee `data/raw/demanda_electricidad_original_mensual1.csv` y genera `db/de
 
 La carga reemplaza los datos del ETL, conserva los resultados de modelos y agrega una auditoría. La opción `--reset` elimina todas las tablas, incluidos los resultados de modelos, antes de reconstruirlas.
 
+## Integración continua
+
+El [workflow de CI](.github/workflows/ci.yml) se ejecuta en cada `push` y `pull_request`. Su único job, `test`, usa Ubuntu y Python 3.11, instala `requirements.txt` y el paquete en modo editable, y ejecuta los comandos de pytest y Ruff indicados arriba. La caché de pip depende de `requirements.txt` y `pyproject.toml`. Cualquier error de instalación, pruebas o lint hace fallar el check; pytest también falla si no recoge pruebas. Las pruebas cubren el ETL y deben interpretarse junto con sus [limitaciones documentadas](docs/validacion/etl.md).
+
+Los cambios se integran mediante PR hacia `develop`. Después de una ejecución real que publique el check `test`, un administrador puede editar o crear una regla para `develop` en **Settings → Branches → Branch protection rules**, activar **Require a pull request before merging** y **Require status checks to pass before merging**, seleccionar `test` de GitHub Actions y guardar. Debe repetir la configuración para `main`, que es una rama distinta, y verificar que el check sea obligatorio en ambas. Véase la [documentación de protecciones de GitHub](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/managing-a-branch-protection-rule).
+
+La validación local no acredita una ejecución de GitHub Actions. La CI requiere revisión e integración, evidencia de una ejecución satisfactoria en un PR y la configuración del check obligatorio en las ramas acordadas.
+
 ## Datos y limitaciones
 
 El dataset contiene 308 meses, de enero de 2001 a agosto de 2026. Los sectores están disponibles desde 2005 y las distribuidoras desde enero de 2014 hasta junio de 2026. La procedencia exacta y las unidades de demanda y potencia están pendientes de confirmación.
